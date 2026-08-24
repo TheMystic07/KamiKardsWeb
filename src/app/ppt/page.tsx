@@ -1,1119 +1,334 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import CosmicBackground from '@/components/CosmicBackground';
 import CylinderCardCarousel, { StellarLogoSVG } from '@/components/CylinderCardCarousel';
+
+const slideTitles = [
+  'Crypto should behave like money',
+  'The off-ramp is the broken step',
+  'One balance. One card. Anywhere Visa works.',
+  'Stellar makes the payment rail disappear',
+  'A crypto neobank people already understand',
+  'AI that can act—without taking control',
+  'Built for one person. Better with a family.',
+  'A focused stack from wallet to checkout',
+  'A card business with software margins',
+  'Help us put Stellar in everyday wallets',
+];
+
+const slideSections = ['VISION', 'PROBLEM', 'SOLUTION', 'WHY STELLAR', 'PRODUCT', 'AGENTIC AI', 'FAMILY', 'ARCHITECTURE', 'BUSINESS', 'THE ASK'];
+
+const slideNotes = [
+  'Open on the outcome, not the technology: Kami makes on-chain value usable in ordinary life. The card is the familiar interface; Stellar is the invisible settlement rail.',
+  'Today, spending crypto means moving funds to an exchange, selling, waiting for a bank transfer, and then using a bank card. Every handoff adds time, fees, and abandonment.',
+  'Kami removes the manual cash-out loop. Users fund with Stellar assets, set a spend balance, and pay through a Visa card issued by a licensed card issuer. The merchant experiences a normal card payment.',
+  'Stellar is purpose-built for moving value: fast settlement, low transaction costs, native assets, and programmable controls through Soroban. That combination supports frequent, small, real-world payments.',
+  'The product feels like a modern neobank: virtual and physical cards, balances, spending controls, receipts, and support. Crypto complexity stays behind the interface.',
+  'Kami AI turns natural-language intent into a structured transaction. It can explain, prepare, and monitor—but user approval and deterministic policies remain the execution boundary.',
+  'The card is for everyone. Family features are a high-retention use case: shared funding, allowances, elder support, emergency access, and merchant or time-based controls.',
+  'Show the separation of concerns: Stellar custody and settlement, Kami orchestration and policy, the licensed issuer for card issuance and authorization, and Visa acceptance at the merchant.',
+  'The model compounds across interchange share, paid plans, and future embedded card programs. Start with globally mobile crypto users, then expand through households and communities.',
+  'Ask for a defined pilot: integration support, grant capital, issuer collaboration, and early users. The milestone is simple—prove repeatable Stellar-funded card spend in the real world.',
+];
+
+type ParsedCommand = { intent: string; target: string; amount: string; guardrail: string };
+
+const commandExamples: Array<{ command: string; parsed: ParsedCommand }> = [
+  { command: 'Move 75 USDC to my weekend card', parsed: { intent: 'FUND_CARD', target: 'Weekend virtual card', amount: '75.00 USDC', guardrail: 'User approval required' } },
+  { command: 'Give Maya ₹2,000 for books this week', parsed: { intent: 'CREATE_ALLOWANCE', target: 'Maya · Books category', amount: '₹2,000 spending limit', guardrail: 'Expires Sunday · User approval' } },
+  { command: 'Freeze my card and show the last charge', parsed: { intent: 'FREEZE_AND_REVIEW', target: 'Primary Visa card', amount: 'No transfer', guardrail: 'Freeze now · Reveal receipt' } },
+];
+
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return <div className="mb-5 flex items-center gap-3 font-mono text-[10px] font-semibold uppercase tracking-[0.26em] text-cyan-300"><span className="h-px w-8 bg-cyan-300/80" />{children}</div>;
+}
+
+function SlideTitle({ children }: { children: React.ReactNode }) {
+  return <h2 className="max-w-5xl font-display text-4xl font-light leading-[1.05] tracking-[-0.035em] text-white sm:text-5xl lg:text-[3.5rem]">{children}</h2>;
+}
+
+function CardMockup() {
+  return (
+    <div className="relative mx-auto w-full max-w-[420px]">
+      <div className="absolute -inset-10 rounded-full bg-cyan-400/10 blur-3xl" />
+      <div className="relative aspect-[1.586/1] overflow-hidden rounded-[28px] border border-white/20 bg-[radial-gradient(circle_at_82%_12%,rgba(34,211,238,.24),transparent_28%),linear-gradient(145deg,#15171d,#050608_70%)] p-7 shadow-[0_30px_90px_rgba(0,0,0,.55)]">
+        <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(110deg,transparent_35%,rgba(255,255,255,.08)_50%,transparent_65%)]" />
+        <div className="relative flex h-full flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <div><div className="font-display text-xl font-light tracking-[0.22em]">KAMI</div><div className="mt-1 font-mono text-[8px] tracking-[0.2em] text-zinc-400">STELLAR SPEND ACCOUNT</div></div>
+            <div className="flex items-center gap-2 text-cyan-300"><StellarLogoSVG className="h-5 w-5" /><span className="font-mono text-[8px] tracking-[0.18em]">STELLAR</span></div>
+          </div>
+          <div>
+            <div className="mb-4 h-7 w-9 rounded-md bg-gradient-to-br from-amber-100 via-amber-300 to-amber-600 opacity-80" />
+            <div className="font-mono text-sm tracking-[0.22em] text-zinc-200">••••  ••••  ••••  2048</div>
+            <div className="mt-5 flex items-end justify-between">
+              <div><div className="font-mono text-[7px] tracking-[0.2em] text-zinc-500">CARDHOLDER</div><div className="mt-1 font-mono text-[10px] tracking-[0.15em]">YOUR NAME</div></div>
+              <div className="font-sans text-2xl font-black italic tracking-[-0.08em]">VISA</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AnimatedCardStage() {
+  return (
+    <div className="relative mx-auto h-[470px] w-full max-w-[560px] overflow-hidden rounded-[34px] border border-white/10 bg-[radial-gradient(circle_at_50%_45%,rgba(34,211,238,.12),transparent_40%),linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.01))] shadow-[0_40px_120px_rgba(0,0,0,.6)]">
+      <div className="pointer-events-none absolute inset-x-10 top-7 z-20 flex items-center justify-between font-mono text-[8px] uppercase tracking-[0.2em] text-zinc-500">
+        <span>Live card collection</span>
+        <span className="flex items-center gap-2 text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,.9)]" /> Interactive</span>
+      </div>
+      <div className="pointer-events-none absolute left-8 top-1/2 z-20 -translate-y-1/2 -rotate-90 font-mono text-[7px] uppercase tracking-[0.28em] text-white/20">Stellar-funded Visa cards</div>
+      <CylinderCardCarousel
+        scale={0.76}
+        className="absolute inset-0 flex items-center justify-center overflow-hidden select-none pointer-events-auto"
+      />
+      <div className="pointer-events-none absolute inset-x-7 bottom-6 z-20 flex items-center justify-between">
+        <div className="rounded-full border border-white/10 bg-black/55 px-3 py-1.5 font-mono text-[8px] uppercase tracking-[0.16em] text-zinc-400 backdrop-blur-md">Move cursor to tilt</div>
+        <div className="flex gap-1.5"><span className="h-1 w-5 rounded-full bg-cyan-300" /><span className="h-1 w-1 rounded-full bg-white/20" /><span className="h-1 w-1 rounded-full bg-white/20" /></div>
+      </div>
+      <span className="pointer-events-none absolute left-4 top-4 h-8 w-8 border-l border-t border-cyan-300/35" />
+      <span className="pointer-events-none absolute bottom-4 right-4 h-8 w-8 border-b border-r border-cyan-300/35" />
+    </div>
+  );
+}
+
+function FlowArrow() {
+  return <div className="hidden h-px flex-1 bg-gradient-to-r from-cyan-300/10 via-cyan-300/70 to-cyan-300/10 lg:block" />;
+}
 
 export default function PitchDeckPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showNotes, setShowNotes] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showOverview, setShowOverview] = useState(false);
-  const [themeMode, setThemeMode] = useState<'sunlit' | 'espresso'>('espresso');
-
-  // Pitch timer
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(true);
+  const [commandIndex, setCommandIndex] = useState(0);
+  const totalSlides = slideTitles.length;
 
-  // Slide 4: Interactive Natural Language Command Simulator
-  const [samplePrompt, setSamplePrompt] = useState('Give Maya ₹2,000 until Sunday');
-  const [parserState, setParserState] = useState<{
-    intent: string;
-    recipient: string;
-    amount: string;
-    expiry: string;
-    factsHash: string;
-    status: 'preview' | 'approved' | 'executed';
-  }>({
-    intent: 'ALLOWANCE_DISPATCH',
-    recipient: 'Maya (Daughter)',
-    amount: '₹2,000 (~24.10 USDC)',
-    expiry: 'Sunday 11:59 PM',
-    factsHash: '0x8b3a1f94...e7c2',
-    status: 'preview',
-  });
-
-  // Slide 5: Seeded Sharma Household
-  const [householdMembers, setHouseholdMembers] = useState([
-    {
-      name: 'Aarav Sharma',
-      role: 'Family Admin',
-      avatar: '👨‍💼',
-      balance: '₹85,000 ($1,020)',
-      cardStatus: 'Active',
-      rules: 'Unrestricted Family Master Card',
-      type: 'Obsidian Metal',
-    },
-    {
-      name: 'Maya Sharma',
-      role: 'Daughter (Teen)',
-      avatar: '👧',
-      balance: '₹2,000 ($24.10)',
-      cardStatus: 'Active',
-      rules: '₹2,000 / week • Books & Groceries only',
-      type: 'Pocket Visa',
-    },
-    {
-      name: 'Rohan Sharma',
-      role: 'Son (College)',
-      avatar: '🎓',
-      balance: '₹15,000 ($180.50)',
-      cardStatus: 'Active',
-      rules: '₹15,000 / mo • Tuition & Campus dining',
-      type: 'Campus Debit',
-    },
-  ]);
-
-  // Timer effect
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isTimerRunning) {
-      interval = setInterval(() => {
-        setTimerSeconds((prev) => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
+    if (!isTimerRunning) return;
+    const timer = window.setInterval(() => setTimerSeconds((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
   }, [isTimerRunning]);
 
-  const formatTimer = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
-  const handlePromptSelect = (prompt: string) => {
-    setSamplePrompt(prompt);
-    if (prompt.includes('Maya')) {
-      setParserState({
-        intent: 'ALLOWANCE_DISPATCH',
-        recipient: 'Maya (Daughter)',
-        amount: '₹2,000 (~24.10 USDC)',
-        expiry: 'Sunday 11:59 PM',
-        factsHash: '0x8b3a1f94...e7c2',
-        status: 'preview',
-      });
-    } else if (prompt.includes('15k') || prompt.includes('Rohan')) {
-      setParserState({
-        intent: 'TUITION_TRANSFER',
-        recipient: 'Rohan (College)',
-        amount: '₹15,000 (~180.50 USDC)',
-        expiry: 'End of Month',
-        factsHash: '0x3c9d2e11...f8b0',
-        status: 'preview',
-      });
-    } else if (prompt.includes('1.5 lakh') || prompt.includes('Emergency')) {
-      setParserState({
-        intent: 'HOUSEHOLD_VAULT_DEPOSIT',
-        recipient: 'Family Emergency Vault',
-        amount: '₹1,50,000 (~1,805.00 USDC)',
-        expiry: 'Instant Crypto Staking',
-        factsHash: '0x99e4b1a7...a3f6',
-        status: 'preview',
-      });
-    } else {
-      setParserState({
-        intent: 'MERCHANT_CHECKOUT',
-        recipient: 'Bookstore POS',
-        amount: '₹750 (~9.00 USDC)',
-        expiry: 'Single-Use OTP Token',
-        factsHash: '0x12d5e9b8...c7a1',
-        status: 'preview',
-      });
+  const nextSlide = useCallback(() => setCurrentSlide((slide) => Math.min(slide + 1, totalSlides - 1)), [totalSlides]);
+  const prevSlide = useCallback(() => setCurrentSlide((slide) => Math.max(slide - 1, 0)), []);
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => undefined);
+      return;
     }
-  };
-
-  const toggleCardFreeze = (index: number) => {
-    setHouseholdMembers((prev) =>
-      prev.map((m, i) => (i === index ? { ...m, cardStatus: m.cardStatus === 'Active' ? 'Frozen' : 'Active' } : m))
-    );
-  };
-
-  const totalSlides = 10;
-
-  const nextSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev < totalSlides - 1 ? prev + 1 : prev));
-  }, [totalSlides]);
-
-  const prevSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev > 0 ? prev - 1 : prev));
+    document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => undefined);
   }, []);
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen().catch(() => {});
-      setIsFullscreen(false);
-    }
-  };
-
-  // Keyboard, Wheel, and Touch gesture listeners
-  const isScrollingRef = useRef(false);
-  const touchStartY = useRef(0);
-  const touchStartX = useRef(0);
+  const wheelLocked = useRef(false);
+  const touchStart = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === 'Space') {
-        e.preventDefault();
-        nextSlide();
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        prevSlide();
-      } else if (e.key === 'f' || e.key === 'F') {
-        toggleFullscreen();
-      } else if (e.key === 'o' || e.key === 'O') {
-        setShowOverview((prev) => !prev);
-      } else if (e.key === 'n' || e.key === 'N') {
-        setShowNotes((prev) => !prev);
-      } else if (e.key === 't' || e.key === 'T') {
-        setThemeMode((prev) => (prev === 'espresso' ? 'sunlit' : 'espresso'));
-      } else if (e.key === 'Home') {
-        setCurrentSlide(0);
-      } else if (e.key === 'End') {
-        setCurrentSlide(totalSlides - 1);
-      }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight' || event.key === ' ') { event.preventDefault(); nextSlide(); }
+      if (event.key === 'ArrowLeft') prevSlide();
+      if (event.key.toLowerCase() === 'f') toggleFullscreen();
+      if (event.key.toLowerCase() === 'n') setShowNotes((value) => !value);
+      if (event.key.toLowerCase() === 'o') setShowOverview((value) => !value);
+      if (event.key === 'Home') setCurrentSlide(0);
+      if (event.key === 'End') setCurrentSlide(totalSlides - 1);
     };
-
-    const handleWheel = (e: WheelEvent) => {
-      if (showOverview) return;
-      if (Math.abs(e.deltaY) > 28) {
-        if (isScrollingRef.current) return;
-        isScrollingRef.current = true;
-
-        if (e.deltaY > 0) {
-          nextSlide();
-        } else {
-          prevSlide();
-        }
-
-        setTimeout(() => {
-          isScrollingRef.current = false;
-        }, 450);
-      }
+    const onWheel = (event: WheelEvent) => {
+      if (showOverview || wheelLocked.current || Math.abs(event.deltaY) < 30) return;
+      wheelLocked.current = true;
+      if (event.deltaY > 0) nextSlide(); else prevSlide();
+      window.setTimeout(() => { wheelLocked.current = false; }, 500);
     };
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
-      touchStartX.current = e.touches[0].clientX;
+    const onTouchStart = (event: TouchEvent) => { touchStart.current = { x: event.touches[0].clientX, y: event.touches[0].clientY }; };
+    const onTouchEnd = (event: TouchEvent) => {
+      const x = event.changedTouches[0].clientX - touchStart.current.x;
+      const y = event.changedTouches[0].clientY - touchStart.current.y;
+      if (Math.max(Math.abs(x), Math.abs(y)) < 45) return;
+      if ((Math.abs(x) > Math.abs(y) ? x : y) < 0) nextSlide(); else prevSlide();
     };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (showOverview) return;
-      const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-      const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-
-      if (Math.abs(deltaX) > 40 || Math.abs(deltaY) > 40) {
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-          if (deltaX < 0) nextSlide();
-          else prevSlide();
-        } else {
-          if (deltaY < 0) nextSlide();
-          else prevSlide();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('wheel', handleWheel, { passive: true });
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true });
-
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('wheel', onWheel, { passive: true });
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend', onTouchEnd);
     };
-  }, [nextSlide, prevSlide, totalSlides, showOverview]);
+  }, [nextSlide, prevSlide, showOverview, toggleFullscreen, totalSlides]);
 
-  const progressPercent = ((currentSlide + 1) / totalSlides) * 100;
-
-  const slideNotes = [
-    'Slide 1: Hook judges immediately. Kami is an AI-native family crypto neobank. Product promise: "Money that understands your family." Fully working codebase on Stellar.',
-    'Slide 2: The Problem. Family fintech is broken. 7+ clunky screens to set an allowance, while EVM crypto cards timeout at the checkout counter.',
-    'Slide 3: The Breakthrough. 6-step loop: Ask -> Understand -> Preview -> Approve -> Execute -> Receipt. Strict security invariant: AI reads & prepares, but only the deterministic gateway executes.',
-    'Slide 4: Interactive Command Parser. Real-time demonstration of colloquial Indian/global number parsing ("15k", "1.5 lakh") bound to a cryptographic Facts Hash.',
-    'Slide 5: Live Sharma Household Demo. Seeded real-world household testing with Aarav (Admin), Maya (Teen allowance), and Rohan (College tuition).',
-    'Slide 6: Technical Moat. Why Stellar + SpacetimeDB? 3.2s finality eliminates POS timeouts, $0.00001 fees enable micro-allowances, and SpacetimeDB syncs all family devices with zero polling.',
-    'Slide 7: Proof of Execution. Over 31,300 LOC across Expo 57 React Native, Fastify 5 Bun gateway, and SpacetimeDB Rust reducers, backed by 45 passing Vitest tests.',
-    'Slide 8: Business Model & Unit Economics. 1.2-1.8% interchange fees, 0% FX cross-border arbitrage, and premium Obsidian metal card subscriptions in a $120B+ market.',
-    'Slide 9: Grant Roadmap & SCF Alignment. Clear 3-phase execution roadmap from Testnet audit to Visa Fast Track pilot and mainnet scaling.',
-    'Slide 10: The Ask & Conclusion. Recap core vision, highlight live website and video demo links, and open for judges technical Q&A.',
-  ];
-
-  const isSunlit = themeMode === 'sunlit';
+  const time = `${String(Math.floor(timerSeconds / 60)).padStart(2, '0')}:${String(timerSeconds % 60).padStart(2, '0')}`;
+  const progress = ((currentSlide + 1) / totalSlides) * 100;
+  const selectedCommand = commandExamples[commandIndex];
 
   return (
-    <div
-      className={`min-h-screen flex flex-col justify-between select-none relative font-sans transition-colors duration-500 ${
-        isSunlit ? 'bg-[#FBF8F3] text-[#2C2018]' : 'bg-[#000000] text-white'
-      }`}
-    >
-      {!isSunlit && <CosmicBackground />}
+    <div className="relative flex h-screen min-h-[680px] select-none flex-col overflow-hidden bg-[#030405] text-white">
+      <CosmicBackground />
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-[linear-gradient(rgba(255,255,255,.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.018)_1px,transparent_1px),radial-gradient(circle_at_50%_20%,rgba(8,145,178,.09),transparent_34%),linear-gradient(to_bottom,transparent_70%,rgba(0,0,0,.8))] [background-size:72px_72px,72px_72px,auto,auto]" />
 
-      {/* Top Deck HUD Header */}
-      <header
-        className={`flex items-center justify-between px-6 sm:px-10 py-3 border-b z-30 transition-colors duration-300 ${
-          isSunlit ? 'bg-[#F6F0E7]/90 border-[#E8DFC8]/60 backdrop-blur-xl' : 'bg-black/70 border-white/10 backdrop-blur-xl'
-        }`}
-      >
+      <header className="relative z-30 flex h-[62px] shrink-0 items-center justify-between border-b border-white/10 bg-black/55 px-4 backdrop-blur-xl sm:px-8">
         <div className="flex items-center gap-3">
-          <div
-            className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
-              isSunlit ? 'bg-[#D95338]/10 border-[#D95338]/30' : 'bg-cyan-500/10 border-cyan-500/30'
-            }`}
-          >
-            <StellarLogoSVG className={`w-4 h-4 ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-display font-light text-base tracking-[0.16em]">KAMI</span>
-              <span
-                className={`font-mono text-[9px] px-1.5 py-0.5 rounded font-semibold tracking-wider ${
-                  isSunlit ? 'bg-[#D95338]/15 text-[#D95338]' : 'bg-cyan-500/20 text-cyan-300'
-                }`}
-              >
-                HACKATHON &amp; GRANT DECK
-              </span>
-            </div>
-            <span className={`font-mono text-[8px] tracking-wider ${isSunlit ? 'text-[#7C6E65]' : 'text-zinc-400'}`}>
-              STELLAR CONSENSUS PROTOCOL • AI FINANCIAL OS
-            </span>
-          </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-300/10 text-cyan-300"><StellarLogoSVG className="h-4 w-4" /></div>
+          <div><div className="flex items-center gap-2 font-display text-sm font-light tracking-[0.24em]"><span>KAMI</span><span className="text-zinc-700">/</span><span className="text-zinc-400">DECK</span></div><div className="hidden font-mono text-[8px] uppercase tracking-[0.18em] text-zinc-500 sm:block">Crypto neobank · Built on Stellar</div></div>
         </div>
-
-        {/* Presenter Controls & Timer HUD */}
-        <div className="flex items-center gap-2.5 font-mono text-xs">
-          {/* Theme Switcher */}
-          <button
-            onClick={() => setThemeMode((prev) => (prev === 'espresso' ? 'sunlit' : 'espresso'))}
-            className={`px-2.5 py-1 rounded-lg border text-xs transition-all ${
-              isSunlit
-                ? 'bg-[#EFE6DA] border-[#D9CEBA] text-[#4A3B32] hover:bg-[#E5DBCB]'
-                : 'bg-white/[0.05] border-white/10 text-zinc-300 hover:text-white'
-            }`}
-            title="Press 'T' to toggle Sunlit / Night theme"
-          >
-            {isSunlit ? '☀️ Sunlit' : '🌙 Night'}
-          </button>
-
-          {/* Pitch Timer */}
-          <div
-            onClick={() => setIsTimerRunning(!isTimerRunning)}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border cursor-pointer ${
-              isSunlit ? 'bg-[#EFE6DA] border-[#D9CEBA] text-[#4A3B32]' : 'bg-white/[0.05] border-white/10 text-zinc-300'
-            }`}
-            title="Click to pause/resume timer"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>⏱ {formatTimer(timerSeconds)}</span>
-          </div>
-
-          <div
-            className={`px-3 py-1 rounded-lg border ${
-              isSunlit ? 'bg-[#EFE6DA] border-[#D9CEBA] text-[#4A3B32]' : 'bg-white/[0.05] border-white/10 text-zinc-400'
-            }`}
-          >
-            <span className="font-bold">{currentSlide + 1}</span> / {totalSlides}
-          </div>
-
-          <button
-            onClick={() => setShowOverview(!showOverview)}
-            className={`px-3 py-1 rounded-lg border text-xs transition-all ${
-              showOverview
-                ? isSunlit
-                  ? 'bg-[#D95338] text-white font-semibold'
-                  : 'bg-white text-black font-semibold'
-                : isSunlit
-                ? 'bg-[#EFE6DA] border-[#D9CEBA] text-[#4A3B32]'
-                : 'bg-white/[0.05] border-white/10 text-zinc-300'
-            }`}
-            title="Press 'O' for overview grid"
-          >
-            Grid (O)
-          </button>
-
-          <button
-            onClick={() => setShowNotes(!showNotes)}
-            className={`px-3 py-1 rounded-lg border text-xs transition-all ${
-              showNotes
-                ? isSunlit
-                  ? 'bg-[#D95338]/20 border-[#D95338] text-[#D95338]'
-                  : 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
-                : isSunlit
-                ? 'bg-[#EFE6DA] border-[#D9CEBA] text-[#4A3B32]'
-                : 'bg-white/[0.05] border-white/10 text-zinc-300'
-            }`}
-            title="Press 'N' for speaker notes"
-          >
-            Notes (N)
-          </button>
-
-          <button
-            onClick={toggleFullscreen}
-            className={`p-1.5 px-2.5 rounded-lg border text-xs ${
-              isSunlit ? 'bg-[#EFE6DA] border-[#D9CEBA] text-[#4A3B32]' : 'bg-white/[0.05] border-white/10 text-zinc-300'
-            }`}
-            title="Press 'F' for fullscreen"
-          >
-            {isFullscreen ? 'Exit' : '⛶ Fullscreen'}
-          </button>
+        <div className="flex items-center gap-2 font-mono text-[10px] text-zinc-400">
+          <button type="button" onClick={() => setIsTimerRunning((value) => !value)} className="hidden rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 transition hover:border-white/20 hover:text-white sm:block">{isTimerRunning ? '●' : 'Ⅱ'} {time}</button>
+          <button type="button" onClick={() => setShowOverview(true)} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 transition hover:text-white">Overview</button>
+          <button type="button" onClick={() => setShowNotes((value) => !value)} className={`hidden rounded-full border px-3 py-1.5 transition sm:block ${showNotes ? 'border-cyan-300/50 bg-cyan-300/10 text-cyan-200' : 'border-white/10 bg-white/[0.04] hover:text-white'}`}>Notes</button>
+          <button type="button" onClick={toggleFullscreen} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 transition hover:text-white">{isFullscreen ? 'Exit' : 'Fullscreen'}</button>
+          <div className="ml-1 hidden rounded-full border border-cyan-300/20 bg-cyan-300/[0.06] px-3 py-1.5 text-cyan-200 md:block">{slideSections[currentSlide]}</div>
+          <div className="ml-1 tabular-nums text-white"><span className="text-cyan-300">{String(currentSlide + 1).padStart(2, '0')}</span> / {String(totalSlides).padStart(2, '0')}</div>
         </div>
       </header>
 
-      {/* Slide Progress Line */}
-      <div className={`w-full h-1 relative z-30 ${isSunlit ? 'bg-[#E8DFC8]' : 'bg-white/10'}`}>
-        <div
-          className={`h-full transition-all duration-300 ease-out shadow-sm ${
-            isSunlit
-              ? 'bg-gradient-to-r from-[#D95338] via-[#E27D60] to-[#C38D9E]'
-              : 'bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 shadow-[0_0_12px_rgba(0,240,255,0.8)]'
-          }`}
-          style={{ width: `${progressPercent}%` }}
-        />
-      </div>
+      <div className="relative z-30 h-[2px] shrink-0 bg-white/5"><div className="h-full bg-gradient-to-r from-cyan-300 via-sky-400 to-lime-300 transition-all duration-500" style={{ width: `${progress}%` }} /></div>
 
-      {/* Dynamic Slide Stage */}
-      <main className="flex-1 flex flex-col justify-center max-w-6xl w-full mx-auto px-4 sm:px-8 lg:px-12 py-5 z-10 overflow-visible">
-        {/* SLIDE 1: Title & The Hook */}
-        {currentSlide === 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-in fade-in zoom-in-95 duration-200">
-            <div className="lg:col-span-7 flex flex-col items-start text-left">
-              <div
-                className={`inline-flex items-center gap-2 px-3.5 py-1 rounded-full font-mono text-[10px] tracking-widest uppercase mb-3 border ${
-                  isSunlit
-                    ? 'bg-[#D95338]/10 border-[#D95338]/30 text-[#D95338]'
-                    : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-                }`}
-              >
-                <StellarLogoSVG className="w-3.5 h-3.5" />
-                <span>STELLAR HACKATHON 2026 • AI-NATIVE FAMILY NEOBANK</span>
-              </div>
-
-              <h1 className="font-display font-light text-4xl sm:text-6xl tracking-tight leading-[1.05] mb-3">
-                Money That Understands Your Family.
-              </h1>
-
-              <p className={`font-mono text-xs sm:text-sm max-w-xl font-light leading-relaxed mb-6 ${isSunlit ? 'text-[#5C4D44]' : 'text-zinc-300'}`}>
-                <strong>Traditional fintech makes users understand the product. Kami makes the product understand the user.</strong> A conversational AI financial OS with programmable Visa cards on Stellar.
-              </p>
-
-              <div className="grid grid-cols-3 gap-3 w-full max-w-lg font-mono text-xs">
-                <div className={`p-3 rounded-xl border ${isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.04] border-white/10'}`}>
-                  <span className={`text-[9px] block uppercase ${isSunlit ? 'text-[#8A796E]' : 'text-zinc-500'}`}>SETTLEMENT</span>
-                  <span className={`font-bold text-xs mt-0.5 block ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>3.2s Finality</span>
-                </div>
-                <div className={`p-3 rounded-xl border ${isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.04] border-white/10'}`}>
-                  <span className={`text-[9px] block uppercase ${isSunlit ? 'text-[#8A796E]' : 'text-zinc-500'}`}>CODEBASE</span>
-                  <span className="text-emerald-500 font-bold text-xs mt-0.5 block">~31,300 LOC</span>
-                </div>
-                <div className={`p-3 rounded-xl border ${isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.04] border-white/10'}`}>
-                  <span className={`text-[9px] block uppercase ${isSunlit ? 'text-[#8A796E]' : 'text-zinc-500'}`}>DEMO STATUS</span>
-                  <span className={`font-bold text-xs mt-0.5 block ${isSunlit ? 'text-[#5C4D44]' : 'text-purple-400'}`}>Live Prototype</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Embedded Live 3D Cylinder Card Carousel */}
-            <div className="lg:col-span-5 h-[400px] sm:h-[460px] w-full relative flex items-center justify-center overflow-visible">
-              <CylinderCardCarousel scale={0.88} />
-              <div className={`absolute bottom-1 font-mono text-[8px] uppercase tracking-widest pointer-events-none ${isSunlit ? 'text-[#8A796E]' : 'text-zinc-500'}`}>
-                ● Live 3D Programmable Cards • Powered by KripiCard &amp; Stellar
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* SLIDE 2: The Problem: Broken Family Fintech */}
-        {currentSlide === 1 && (
-          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div>
-              <span className={`font-mono text-xs uppercase tracking-widest block mb-1 ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                02 / THE PROBLEM
-              </span>
-              <h2 className="font-display font-light text-3xl sm:text-4xl">
-                Family Fintech is Trapped in Friction &amp; Legacy Complexity
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 my-2 font-mono text-xs">
-              <div className="p-6 rounded-2xl bg-red-950/20 border border-red-500/30 flex flex-col justify-between">
-                <div>
-                  <span className="text-2xl block mb-2">📋</span>
-                  <h3 className="font-display text-lg text-white font-bold mb-2">7+ Form Navigation Hell</h3>
-                  <p className="text-xs text-zinc-300 font-sans leading-relaxed">
-                    Giving an allowance or changing a spending limit requires navigating through 7+ deeply nested screens and rigid dropdowns.
-                  </p>
-                </div>
-                <span className="text-[10px] text-red-400 font-bold pt-3 border-t border-red-500/20">
-                  HIGH ABANDONMENT RATE
-                </span>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-red-950/20 border border-red-500/30 flex flex-col justify-between">
-                <div>
-                  <span className="text-2xl block mb-2">⏳</span>
-                  <h3 className="font-display text-lg text-white font-bold mb-2">Checkout POS Timeouts</h3>
-                  <p className="text-xs text-zinc-300 font-sans leading-relaxed">
-                    EVM chains take 15s to 2 mins for confirmation, exceeding Visa&apos;s 4.5s point-of-sale timeout, causing declined retail transactions.
-                  </p>
-                </div>
-                <span className="text-[10px] text-red-400 font-bold pt-3 border-t border-red-500/20">
-                  4.5s VISA TIMEOUT LIMIT
-                </span>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-red-950/20 border border-red-500/30 flex flex-col justify-between">
-                <div>
-                  <span className="text-2xl block mb-2">💸</span>
-                  <h3 className="font-display text-lg text-white font-bold mb-2">3.5% FX &amp; $4 Gas Fees</h3>
-                  <p className="text-xs text-zinc-300 font-sans leading-relaxed">
-                    Traditional banks charge 3.5% foreign exchange markups, while Ethereum gas costs make $5 daily pocket money unviable.
-                  </p>
-                </div>
-                <span className="text-[10px] text-red-400 font-bold pt-3 border-t border-red-500/20">
-                  $120B+ REMITTANCE FRICTION
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* SLIDE 3: The Breakthrough: 6-Step Interaction Loop */}
-        {currentSlide === 2 && (
-          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div>
-              <span className={`font-mono text-xs uppercase tracking-widest block mb-1 ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                03 / THE BREAKTHROUGH
-              </span>
-              <h2 className="font-display font-light text-3xl sm:text-4xl">
-                The Deterministic 6-Step Safety Architecture
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 my-2 font-mono text-xs">
-              {[
-                { step: '01 / ASK', title: 'Ask', desc: 'AI is primary home screen command layer.', icon: '💬', badge: 'Natural Lang' },
-                { step: '02 / PARSE', title: 'Understand', desc: 'Qwen AI parses intents & colloquial numbers.', icon: '🧠', badge: 'READ ONLY' },
-                { step: '03 / PREVIEW', title: 'Preview', desc: 'Stages action & computes Facts Hash. AI never moves money.', icon: '📋', badge: 'PREPARE ONLY' },
-                { step: '04 / APPROVE', title: 'Approve', desc: 'Parental biometric confirmation via Privy MPC.', icon: '👆', badge: 'FACE ID AUTH' },
-                { step: '05 / EXECUTE', title: 'Execute', desc: 'Deterministic Fastify 5 Gateway triggers Stellar & KripiCard.', icon: '⚡', badge: 'GATEWAY REDUCER' },
-                { step: '06 / RECEIPT', title: 'Receipt', desc: 'Creates immutable auditable receipt in SpacetimeDB.', icon: '🧾', badge: 'SEALED AUDIT' },
-              ].map((item, idx) => (
-                <div
-                  key={idx}
-                  className={`p-4 rounded-xl border text-left flex flex-col justify-between ${
-                    isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.03] border-white/10'
-                  }`}
-                >
-                  <div>
-                    <span className="text-xl block mb-1">{item.icon}</span>
-                    <span className={`text-[9px] block font-bold uppercase mb-1 ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                      {item.step}
-                    </span>
-                    <h4 className="font-display font-semibold text-sm mb-1">{item.title}</h4>
-                    <p className={`text-[10px] font-sans leading-tight ${isSunlit ? 'text-[#5C4D44]' : 'text-zinc-300'}`}>
-                      {item.desc}
-                    </p>
-                  </div>
-                  <span className={`text-[8px] font-bold block pt-2 mt-2 border-t uppercase ${isSunlit ? 'border-[#E0D5C3] text-emerald-700' : 'border-white/10 text-emerald-400'}`}>
-                    {item.badge}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <div className={`p-4 rounded-2xl border font-mono text-xs flex items-center justify-between ${isSunlit ? 'bg-[#FAF5ED] border-[#D95338]/30' : 'bg-white/[0.02] border-white/10'}`}>
-              <div className="flex items-center gap-3">
-                <span className="text-xl">🛡️</span>
-                <span className="font-sans text-xs">
-                  <strong>Zero-Hallucination Invariant</strong>: AI has <code>READ</code> and <code>PREPARE</code> permissions only. AI cannot execute mutations. The single-writer Gateway guarantees cryptographic execution.
-                </span>
-              </div>
-              <span className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase ${isSunlit ? 'bg-[#D95338]/10 text-[#D95338]' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>
-                100% Deterministic Safety
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* SLIDE 4: Interactive Command Parser Demo */}
-        {currentSlide === 3 && (
-          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div>
-              <span className={`font-mono text-xs uppercase tracking-widest block mb-1 ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                04 / INTERACTIVE DEMO
-              </span>
-              <h2 className="font-display font-light text-3xl sm:text-4xl">
-                Colloquial Intent Parsing &amp; Facts Hash Validation
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 my-2 items-center">
-              {/* Prompts selection */}
-              <div className="lg:col-span-5 flex flex-col gap-3 font-mono text-xs">
-                <span className={`text-[10px] uppercase ${isSunlit ? 'text-[#8A796E]' : 'text-zinc-400'}`}>
-                  TEST NATURAL LANGUAGE QUERIES:
-                </span>
-
-                {[
-                  { text: 'Give Maya ₹2,000 until Sunday', tag: 'Colloquial Allowance' },
-                  { text: 'Send 15k to Rohan for college tuition', tag: 'Short-Form (15k)' },
-                  { text: 'Deposit 1.5 lakh into Family Emergency Pool', tag: 'Indian Denomination (Lakh)' },
-                ].map((item, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handlePromptSelect(item.text)}
-                    className={`p-3.5 rounded-xl border text-left transition-all ${
-                      samplePrompt === item.text
-                        ? isSunlit
-                          ? 'bg-[#EFE4D6] border-[#D95338] text-[#2C2018] shadow-sm'
-                          : 'bg-cyan-950/40 border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.2)]'
-                        : isSunlit
-                        ? 'bg-[#F2ECE1] border-[#E0D5C3] text-[#5C4D44]'
-                        : 'bg-white/[0.03] border-white/10 text-zinc-300'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[9px] uppercase font-bold text-zinc-500">{item.tag}</span>
-                      <span className={`text-[9px] ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>Run Parser →</span>
-                    </div>
-                    <div className="font-medium text-xs">&ldquo;{item.text}&rdquo;</div>
-                  </button>
-                ))}
-              </div>
-
-              {/* Execution card */}
-              <div className={`lg:col-span-7 p-6 rounded-2xl border font-mono text-xs flex flex-col gap-3 ${isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.03] border-white/15'}`}>
-                <div className={`flex items-center justify-between pb-2 border-b ${isSunlit ? 'border-[#E0D5C3]' : 'border-white/10'}`}>
-                  <span className={`font-bold ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                    PREPARED ACTION PAYLOAD (FACTS HASH BOUND)
-                  </span>
-                  <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">
-                    PARSED IN 160ms
-                  </span>
-                </div>
-
-                <div className="space-y-2 py-1">
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Staged Intent:</span>
-                    <span className="font-bold">{parserState.intent}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Target Member:</span>
-                    <span>{parserState.recipient}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Parsed Amount:</span>
-                    <span className="text-emerald-500 font-bold">{parserState.amount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Active Expiry:</span>
-                    <span>{parserState.expiry}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-500">Cryptographic Facts Hash:</span>
-                    <span className="font-mono text-[10px] text-purple-400">{parserState.factsHash}</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setParserState((prev) => ({ ...prev, status: 'executed' }));
-                    setTimeout(() => setParserState((prev) => ({ ...prev, status: 'preview' })), 3000);
-                  }}
-                  className={`w-full py-3 rounded-xl font-mono text-xs font-semibold transition-all mt-1 shadow-lg ${
-                    parserState.status === 'executed'
-                      ? 'bg-emerald-500 text-white'
-                      : isSunlit
-                      ? 'bg-[#D95338] text-white hover:bg-[#C2432A]'
-                      : 'bg-white text-black hover:bg-zinc-200'
-                  }`}
-                >
-                  {parserState.status === 'executed'
-                    ? '✓ MUTATED VIA GATEWAY REDUCER (RECEIPT #7492 CREATED)'
-                    : '1-Tap Parental Biometric Approval →'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* SLIDE 5: Live Seeded Sharma Household */}
-        {currentSlide === 4 && (
-          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-end">
+      <main className="relative z-10 mx-auto flex w-full max-w-[1320px] flex-1 items-center overflow-hidden px-5 py-5 sm:px-10 lg:px-14">
+        <section key={currentSlide} className="slide-enter w-full">
+          {currentSlide === 0 && (
+            <div className="grid items-center gap-10 lg:grid-cols-[1.08fr_.92fr]">
               <div>
-                <span className={`font-mono text-xs uppercase tracking-widest block mb-1 ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                  05 / SEEDED HOUSEHOLD DEMO
-                </span>
-                <h2 className="font-display font-light text-3xl sm:text-4xl">
-                  Seeded Sharma Household Demo
-                </h2>
+                <Eyebrow>Stellar-powered everyday spending</Eyebrow>
+                <h1 className="max-w-3xl font-display text-5xl font-light leading-[0.95] tracking-[-0.055em] sm:text-6xl lg:text-[5.25rem]">Crypto should<br /><span className="text-cyan-300">behave like money.</span></h1>
+                <p className="mt-7 max-w-xl text-lg leading-relaxed text-zinc-300 sm:text-xl">Kami is the crypto neobank that lets people fund with Stellar assets and spend through a Visa card in everyday life.</p>
+                <div className="mt-8 flex flex-wrap items-center gap-5 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500"><span>Fund on Stellar</span><span className="text-cyan-400">→</span><span>Spend globally</span><span className="text-cyan-400">→</span><span>Stay in control</span></div>
               </div>
-              <span className="font-mono text-xs text-emerald-500 font-bold bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                ● LIVE SEEDED PROTOTYPE
-              </span>
+              <AnimatedCardStage />
             </div>
+          )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-2 font-mono text-xs">
-              {householdMembers.map((member, idx) => (
-                <div
-                  key={idx}
-                  className={`p-6 rounded-2xl border transition-all flex flex-col justify-between ${
-                    member.cardStatus === 'Active'
-                      ? isSunlit
-                        ? 'bg-[#F2ECE1] border-[#E0D5C3]'
-                        : 'bg-white/[0.03] border-white/15'
-                      : 'bg-red-950/20 border-red-500/30'
-                  }`}
-                >
-                  <div>
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{member.avatar}</span>
-                        <span className={`text-[10px] uppercase font-bold ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                          {member.role}
-                        </span>
-                      </div>
-                      <span
-                        className={`text-[9px] px-2 py-0.5 rounded font-bold ${
-                          member.cardStatus === 'Active'
-                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                            : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                        }`}
-                      >
-                        {member.cardStatus === 'Active' ? '● ACTIVE' : '❄ FROZEN'}
-                      </span>
-                    </div>
-
-                    <h3 className="font-display text-xl mb-0.5 font-semibold">{member.name}</h3>
-                    <div className="text-sm font-bold mb-3 text-emerald-500">{member.balance}</div>
-
-                    <div className={`p-3 rounded-xl border text-[11px] space-y-1.5 ${isSunlit ? 'bg-[#EAE2D5] border-[#D9CEBA]' : 'bg-white/[0.02] border-white/5'}`}>
-                      <div className="text-zinc-500">Tier: <span className="font-semibold text-zinc-700 dark:text-zinc-200">{member.type}</span></div>
-                      <div className="text-zinc-500">Rules: <span className="text-cyan-600 dark:text-cyan-300">{member.rules}</span></div>
-                    </div>
-                  </div>
-
-                  <div className={`mt-4 pt-3 border-t flex gap-2 ${isSunlit ? 'border-[#E0D5C3]' : 'border-white/10'}`}>
-                    <button
-                      onClick={() => toggleCardFreeze(idx)}
-                      className={`flex-1 py-2 rounded-xl text-xs font-mono font-semibold transition-all ${
-                        member.cardStatus === 'Active'
-                          ? 'bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20'
-                          : 'bg-emerald-500 text-white'
-                      }`}
-                    >
-                      {member.cardStatus === 'Active' ? '🔒 Freeze Card' : 'Unfreeze Card'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* SLIDE 6: Why Stellar + SpacetimeDB? Technical Moat Benchmark */}
-        {currentSlide === 5 && (
-          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+          {currentSlide === 1 && (
             <div>
-              <span className={`font-mono text-xs uppercase tracking-widest block mb-1 ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                06 / TECHNICAL MOAT
-              </span>
-              <h2 className="font-display font-light text-3xl sm:text-4xl">
-                Why Stellar &amp; SpacetimeDB Win in the Real World
-              </h2>
+              <Eyebrow>The problem</Eyebrow><SlideTitle>The off-ramp is the broken step between crypto and real life.</SlideTitle>
+              <div className="mt-12 grid items-stretch gap-4 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]">
+                {[
+                  ['01', 'Move', 'Send assets from a wallet to an exchange'],
+                  ['02', 'Sell', 'Convert crypto and absorb price or platform friction'],
+                  ['03', 'Wait', 'Withdraw to a bank account before funds are usable'],
+                  ['04', 'Spend', 'Finally pay with a completely separate card'],
+                ].map(([number, title, body], index) => <React.Fragment key={title}><div className={`relative min-h-52 border-t p-6 ${index === 3 ? 'border-rose-400/70 bg-rose-400/[0.06]' : 'border-white/15 bg-white/[0.025]'}`}><div className={`font-mono text-xs ${index === 3 ? 'text-rose-300' : 'text-cyan-300'}`}>{number}</div><h3 className="mt-8 font-display text-3xl font-light">{title}</h3><p className="mt-4 text-sm leading-relaxed text-zinc-400">{body}</p></div>{index < 3 && <div className="hidden items-center text-zinc-700 lg:flex">→</div>}</React.Fragment>)}
+              </div>
+              <p className="mt-8 max-w-4xl font-display text-2xl font-light text-zinc-300">People do not need another exchange flow. They need their on-chain balance to work at checkout.</p>
             </div>
+          )}
 
-            <div className="overflow-x-auto my-2">
-              <table className={`w-full text-left font-mono text-xs border-collapse rounded-2xl overflow-hidden ${isSunlit ? 'bg-[#F2ECE1]' : 'bg-white/[0.03]'}`}>
-                <thead>
-                  <tr className={`border-b ${isSunlit ? 'border-[#E0D5C3] bg-[#E8DFC8]' : 'border-white/10 bg-white/[0.05]'}`}>
-                    <th className="p-3.5">METRIC / CAPABILITY</th>
-                    <th className={`p-3.5 ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'} font-bold`}>KAMI (STELLAR + SPACETIMEDB)</th>
-                    <th className="p-3.5 text-zinc-400">ETHEREUM L2s</th>
-                    <th className="p-3.5 text-zinc-400">TRADITIONAL BANKS</th>
-                  </tr>
-                </thead>
-                <tbody className={`divide-y ${isSunlit ? 'divide-[#E0D5C3]' : 'divide-white/5'}`}>
-                  <tr>
-                    <td className="p-3.5 font-semibold">Deterministic Finality</td>
-                    <td className="p-3.5 text-emerald-500 font-bold">3.2s (SCP Consensus)</td>
-                    <td className="p-3.5 text-red-400">12s – 15 mins (Reorg risk)</td>
-                    <td className="p-3.5 text-zinc-400">2 – 3 Business Days (ACH)</td>
-                  </tr>
-                  <tr>
-                    <td className="p-3.5 font-semibold">Average Transaction Fee</td>
-                    <td className="p-3.5 text-emerald-500 font-bold">$0.00001 (0.00001 XLM)</td>
-                    <td className="p-3.5 text-red-400">$0.25 – $4.00</td>
-                    <td className="p-3.5 text-zinc-400">$15 – $35 Wire Fees</td>
-                  </tr>
-                  <tr>
-                    <td className="p-3.5 font-semibold">Multi-Device Live Sync</td>
-                    <td className="p-3.5 text-emerald-500 font-bold">Instant (SpacetimeDB Rust Wasm)</td>
-                    <td className="p-3.5 text-amber-400">WebSocket / Polling Lag</td>
-                    <td className="p-3.5 text-red-400">Batch Processed</td>
-                  </tr>
-                  <tr>
-                    <td className="p-3.5 font-semibold">Foreign Exchange Markup</td>
-                    <td className="p-3.5 text-emerald-500 font-bold">0% (Stellar Native Path Payment)</td>
-                    <td className="p-3.5 text-amber-400">0.3% – 1% DEX Slippage</td>
-                    <td className="p-3.5 text-red-400">3.5% + $5 International Fee</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* SLIDE 7: System Architecture & Proof of Execution */}
-        {currentSlide === 6 && (
-          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+          {currentSlide === 2 && (
             <div>
-              <span className={`font-mono text-xs uppercase tracking-widest block mb-1 ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                07 / CODEBASE &amp; ARCHITECTURE
-              </span>
-              <h2 className="font-display font-light text-3xl sm:text-4xl">
-                ~31,300 LOC Production Architecture
-              </h2>
+              <Eyebrow>The solution</Eyebrow><SlideTitle>One balance. One card. Anywhere Visa works.</SlideTitle>
+              <div className="mt-12 grid gap-4 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] lg:items-center">
+                {[
+                  ['STELLAR WALLET', 'USDC · XLM', 'Fund in seconds'],
+                  ['KAMI', 'Spend balance', 'Policies + orchestration'],
+                  ['CARD ISSUER', 'Visa card', 'Licensed issuance'],
+                  ['MERCHANT', 'Local currency', 'A normal card payment'],
+                ].map(([label, title, detail], index) => <React.Fragment key={label}><div className={`min-h-48 rounded-[26px] border p-6 ${index === 1 ? 'border-cyan-300/45 bg-cyan-300/[0.08] shadow-[0_0_60px_rgba(34,211,238,.08)]' : 'border-white/10 bg-white/[0.035]'}`}><div className="font-mono text-[9px] tracking-[0.2em] text-zinc-500">{label}</div><h3 className="mt-9 font-display text-3xl font-light text-white">{title}</h3><p className="mt-3 text-sm text-zinc-400">{detail}</p></div>{index < 3 && <FlowArrow />}</React.Fragment>)}
+              </div>
+              <div className="mt-9 flex items-start gap-4 border-l-2 border-lime-300 pl-5"><span className="font-mono text-[10px] uppercase tracking-[0.2em] text-lime-300">The unlock</span><p className="max-w-3xl text-base leading-relaxed text-zinc-300">No manual sell-withdraw-wait loop. Kami coordinates the payment while the merchant receives a familiar Visa transaction.</p></div>
             </div>
+          )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 my-2 font-mono text-xs">
-              <div className={`p-6 rounded-2xl border flex flex-col justify-between ${isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.03] border-white/10'}`}>
-                <div>
-                  <span className={`text-[10px] font-bold block mb-1 uppercase ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                    MOBILE CLIENT
-                  </span>
-                  <h3 className="font-display text-2xl font-bold mb-1">~25,000 LOC</h3>
-                  <span className="text-[11px] text-zinc-500 block mb-3">136 TypeScript Files</span>
-                  <p className={`font-sans text-xs leading-relaxed ${isSunlit ? 'text-[#5C4D44]' : 'text-zinc-300'}`}>
-                    Expo 57 + React Native 0.86 + React 19. Expo Router, Zustand state, Reanimated 4, Skia shaders, and Gesture Handler.
-                  </p>
-                </div>
-                <span className="text-[9px] pt-3 border-t border-black/10 dark:border-white/10 font-bold text-emerald-500">
-                  BUN RUNTIME ACCELERATED
-                </span>
-              </div>
-
-              <div className={`p-6 rounded-2xl border flex flex-col justify-between ${isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.03] border-white/10'}`}>
-                <div>
-                  <span className={`text-[10px] font-bold block mb-1 uppercase ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                    GATEWAY BACKEND
-                  </span>
-                  <h3 className="font-display text-2xl font-bold mb-1">~6,300 LOC</h3>
-                  <span className="text-[11px] text-zinc-500 block mb-3">Fastify 5 Microservices</span>
-                  <p className={`font-sans text-xs leading-relaxed ${isSunlit ? 'text-[#5C4D44]' : 'text-zinc-300'}`}>
-                    Sole writer to SpacetimeDB. Manages PREPARE / EXECUTE, Facts Hashing, idempotency, AI tool bridges, and transaction safety.
-                  </p>
-                </div>
-                <span className="text-[9px] pt-3 border-t border-black/10 dark:border-white/10 font-bold text-purple-400">
-                  SINGLE WRITER GATEWAY
-                </span>
-              </div>
-
-              <div className={`p-6 rounded-2xl border flex flex-col justify-between ${isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.03] border-white/10'}`}>
-                <div>
-                  <span className={`text-[10px] font-bold block mb-1 uppercase ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                    DATABASE &amp; REDUCERS
-                  </span>
-                  <h3 className="font-display text-2xl font-bold mb-1">SpacetimeDB 2.8</h3>
-                  <span className="text-[11px] text-zinc-500 block mb-3">20 Tables • 28 Reducers</span>
-                  <p className={`font-sans text-xs leading-relaxed ${isSunlit ? 'text-[#5C4D44]' : 'text-zinc-300'}`}>
-                    Real-time relational engine in Rust. Tracks users, households, members, cards, balances, and audit events with 0 polling.
-                  </p>
-                </div>
-                <span className="text-[9px] pt-3 border-t border-black/10 dark:border-white/10 font-bold text-cyan-400">
-                  45/45 VITEST TESTS PASSING
-                </span>
-              </div>
+          {currentSlide === 3 && (
+            <div className="grid gap-12 lg:grid-cols-[.92fr_1.08fr] lg:items-end">
+              <div><Eyebrow>Why Stellar</Eyebrow><SlideTitle>Stellar makes the payment rail disappear.</SlideTitle><p className="mt-7 max-w-lg text-lg leading-relaxed text-zinc-400">Everyday payments demand speed, low cost, predictable assets, and programmable controls—not speculative blockspace.</p></div>
+              <div className="space-y-1">{[
+                ['01', 'Fast settlement', 'Value moves in seconds, keeping the experience aligned with checkout.'],
+                ['02', 'Tiny network costs', 'Frequent card funding and small transfers remain economically viable.'],
+                ['03', 'Native asset rails', 'USDC and XLM can move through one purpose-built value network.'],
+                ['04', 'Soroban controls', 'Smart contracts can enforce limits, approvals, vault rules, and recovery logic.'],
+              ].map(([number, title, body]) => <div key={number} className="grid grid-cols-[44px_1fr] gap-4 border-b border-white/10 py-5 last:border-0"><div className="font-mono text-xs text-cyan-300">{number}</div><div className="grid gap-2 sm:grid-cols-[190px_1fr]"><h3 className="font-display text-xl font-light text-white">{title}</h3><p className="text-sm leading-relaxed text-zinc-400">{body}</p></div></div>)}</div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* SLIDE 8: Business Model & Unit Economics */}
-        {currentSlide === 7 && (
-          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+          {currentSlide === 4 && (
             <div>
-              <span className={`font-mono text-xs uppercase tracking-widest block mb-1 ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                08 / BUSINESS MODEL &amp; REVENUE
-              </span>
-              <h2 className="font-display font-light text-3xl sm:text-4xl">
-                Diversified Revenue Streams &amp; Unit Economics
-              </h2>
+              <Eyebrow>The product</Eyebrow><SlideTitle>A crypto neobank people already understand.</SlideTitle>
+              <div className="mt-11 grid gap-8 lg:grid-cols-[.9fr_1.1fr] lg:items-center"><CardMockup /><div className="grid gap-x-8 gap-y-9 sm:grid-cols-2">{[
+                ['Fund', 'Add USDC or XLM from a Stellar wallet.'], ['Spend', 'Use virtual or physical Visa cards for daily purchases.'], ['Control', 'Set limits, freeze cards, and create purpose-bound balances.'], ['Understand', 'See clear receipts, asset movement, and real spending context.'], ['Automate', 'Let Kami AI prepare transfers, budgets, and card actions.'], ['Recover', 'Build safer account recovery and shared approval paths.'],
+              ].map(([title, body], index) => <div key={title} className="border-l border-white/15 pl-5"><div className="font-mono text-[9px] text-cyan-300">0{index + 1}</div><h3 className="mt-2 font-display text-2xl font-light">{title}</h3><p className="mt-2 text-sm leading-relaxed text-zinc-400">{body}</p></div>)}</div></div>
             </div>
+          )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 my-2 font-mono text-xs">
-              <div className={`p-6 rounded-2xl border flex flex-col justify-between ${isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.03] border-white/10'}`}>
-                <div>
-                  <span className="text-3xl block mb-2">💳</span>
-                  <h3 className="font-display text-lg font-bold mb-2">Interchange Fee Split</h3>
-                  <p className={`font-sans text-xs leading-relaxed ${isSunlit ? 'text-[#5C4D44]' : 'text-zinc-300'}`}>
-                    Earn 1.2% – 1.8% interchange yield on all domestic and international card transactions routed via KripiCard &amp; Visa.
-                  </p>
-                </div>
-                <span className="text-[10px] text-emerald-500 font-bold pt-3 border-t border-black/10 dark:border-white/10">
-                  RECURRING TRANSACTION VOLUME
-                </span>
-              </div>
-
-              <div className={`p-6 rounded-2xl border flex flex-col justify-between ${isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.03] border-white/10'}`}>
-                <div>
-                  <span className="text-3xl block mb-2">💱</span>
-                  <h3 className="font-display text-lg font-bold mb-2">0% FX Arbitrage Margin</h3>
-                  <p className={`font-sans text-xs leading-relaxed ${isSunlit ? 'text-[#5C4D44]' : 'text-zinc-300'}`}>
-                    Capture a 0.25% spread on automated cross-border currency conversions while saving families 3.25% vs traditional banks.
-                  </p>
-                </div>
-                <span className="text-[10px] text-cyan-400 font-bold pt-3 border-t border-black/10 dark:border-white/10">
-                  STELLAR NATIVE PATH PAYMENTS
-                </span>
-              </div>
-
-              <div className={`p-6 rounded-2xl border flex flex-col justify-between ${isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.03] border-white/10'}`}>
-                <div>
-                  <span className="text-3xl block mb-2">💎</span>
-                  <h3 className="font-display text-lg font-bold mb-2">Premium Obsidian Tiers</h3>
-                  <p className={`font-sans text-xs leading-relaxed ${isSunlit ? 'text-[#5C4D44]' : 'text-zinc-300'}`}>
-                    $9.99/mo family subscription unlocking physical Obsidian metal cards, unlimited sub-accounts, and priority concierge AI support.
-                  </p>
-                </div>
-                <span className="text-[10px] text-purple-400 font-bold pt-3 border-t border-black/10 dark:border-white/10">
-                  HIGH-LTV SUBSCRIPTION REVENUE
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* SLIDE 9: Grant Roadmap & Milestones */}
-        {currentSlide === 8 && (
-          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+          {currentSlide === 5 && (
             <div>
-              <span className={`font-mono text-xs uppercase tracking-widest block mb-1 ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                09 / GRANT MILESTONES &amp; ROADMAP
-              </span>
-              <h2 className="font-display font-light text-3xl sm:text-4xl">
-                Stellar Community Fund (SCF) Grant Execution Plan
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 my-2 font-mono text-xs">
-              <div className={`p-6 rounded-2xl border flex flex-col justify-between ${isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.03] border-white/10'}`}>
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-emerald-500 font-bold text-xs">PHASE 1 (CURRENT)</span>
-                    <span className="bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded text-[9px] font-bold">COMPLETED</span>
-                  </div>
-                  <h3 className="font-display text-lg font-bold mb-2">Testnet Prototype &amp; AI Engine</h3>
-                  <ul className="space-y-1.5 text-[11px] text-zinc-400 font-sans">
-                    <li>✓ Complete React Native Expo 57 app (~25k LOC)</li>
-                    <li>✓ SpacetimeDB 2.8 real-time sync engine</li>
-                    <li>✓ Qwen financial intent parser with Facts Hashing</li>
-                    <li>✓ 45 Vitest safety &amp; auth integration tests</li>
-                  </ul>
-                </div>
-                <span className="text-[9px] text-zinc-500 pt-3 border-t border-black/10 dark:border-white/10">
-                  DELIVERABLE: WORKING DEMO
-                </span>
-              </div>
-
-              <div className={`p-6 rounded-2xl border flex flex-col justify-between ${isSunlit ? 'bg-[#FAF5ED] border-[#D95338]/40' : 'bg-cyan-950/20 border-cyan-500/40'}`}>
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className={`font-bold text-xs ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>PHASE 2 (GRANT GOAL)</span>
-                    <span className="bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded text-[9px] font-bold">NEXT 90 DAYS</span>
-                  </div>
-                  <h3 className="font-display text-lg font-bold mb-2">Audits &amp; Visa Issuer Pilot</h3>
-                  <ul className="space-y-1.5 text-[11px] text-zinc-400 font-sans">
-                    <li>• Formal smart contract &amp; gateway security audit</li>
-                    <li>• Production KripiCard Visa card issuance batch</li>
-                    <li>• Closed beta rollout to 500 family households</li>
-                    <li>• Automated INR &amp; USD on/off-ramp bridge</li>
-                  </ul>
-                </div>
-                <span className="text-[9px] text-cyan-400 pt-3 border-t border-cyan-500/20">
-                  SCF GRANT TARGET: $50,000
-                </span>
-              </div>
-
-              <div className={`p-6 rounded-2xl border flex flex-col justify-between ${isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.03] border-white/10'}`}>
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-purple-400 font-bold text-xs">PHASE 3 (SCALE)</span>
-                    <span className="bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded text-[9px] font-bold">Q4 2026</span>
-                  </div>
-                  <h3 className="font-display text-lg font-bold mb-2">Mainnet Public Launch</h3>
-                  <ul className="space-y-1.5 text-[11px] text-zinc-400 font-sans">
-                    <li>• iOS App Store &amp; Google Play Store global release</li>
-                    <li>• Physical Obsidian Metal card delivery</li>
-                    <li>• AI autonomous yield optimizer across Stellar DeFi</li>
-                    <li>• Multi-household collaborative family trusts</li>
-                  </ul>
-                </div>
-                <span className="text-[9px] text-zinc-500 pt-3 border-t border-black/10 dark:border-white/10">
-                  TARGET: 25,000 ACTIVE CARDS
-                </span>
+              <Eyebrow>Agentic finance, bounded by design</Eyebrow><SlideTitle>AI that can act—without taking control.</SlideTitle>
+              <div className="mt-9 grid gap-6 lg:grid-cols-[.92fr_1.08fr]">
+                <div><div className="mb-3 font-mono text-[9px] uppercase tracking-[0.18em] text-zinc-500">Try a command</div><div className="space-y-2">{commandExamples.map((example, index) => <button type="button" key={example.command} onClick={() => setCommandIndex(index)} className={`w-full rounded-2xl border px-5 py-4 text-left text-sm transition ${commandIndex === index ? 'border-cyan-300/50 bg-cyan-300/10 text-white' : 'border-white/10 bg-white/[0.025] text-zinc-400 hover:border-white/20 hover:text-white'}`}>“{example.command}”</button>)}</div><p className="mt-5 border-l-2 border-lime-300 pl-4 text-sm leading-relaxed text-zinc-400">The AI interprets intent. Deterministic policy and explicit approval control execution.</p></div>
+                <div className="rounded-[28px] border border-white/10 bg-[#080a0d]/90 p-6 shadow-2xl"><div className="flex items-center justify-between border-b border-white/10 pb-4"><span className="font-mono text-[9px] uppercase tracking-[0.2em] text-zinc-500">Structured action preview</span><span className="rounded-full bg-lime-300/10 px-3 py-1 font-mono text-[9px] text-lime-300">NOT EXECUTED</span></div><div className="mt-5 space-y-4">{Object.entries(selectedCommand.parsed).map(([key, value]) => <div key={key} className="grid grid-cols-[110px_1fr] gap-4 border-b border-white/[0.07] pb-3 last:border-0"><span className="font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-600">{key}</span><span className="font-mono text-sm text-zinc-200">{value}</span></div>)}</div><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-xl border border-white/10 px-4 py-3 text-center font-mono text-[10px] text-zinc-500">CANCEL</div><div className="rounded-xl bg-white px-4 py-3 text-center font-mono text-[10px] font-bold text-black">APPROVE ACTION</div></div></div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* SLIDE 10: The Ask & Judge Q&A */}
-        {currentSlide === 9 && (
-          <div className="flex flex-col items-center justify-center text-center py-5 animate-in fade-in zoom-in-95 duration-200">
-            <div className={`w-16 h-16 rounded-2xl border flex items-center justify-center mb-3 ${isSunlit ? 'bg-[#D95338]/10 border-[#D95338]/30' : 'bg-white/[0.08] border-white/20'}`}>
-              <StellarLogoSVG className={`w-8 h-8 ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`} />
+          {currentSlide === 6 && (
+            <div className="grid gap-12 lg:grid-cols-[1fr_1fr] lg:items-center">
+              <div><Eyebrow>High-retention wedge</Eyebrow><SlideTitle>Built for one person. Better with a family.</SlideTitle><p className="mt-7 max-w-xl text-lg leading-relaxed text-zinc-400">Kami is a universal card product. Family controls add a powerful reason to keep more financial life in one trusted account.</p><div className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.035] px-5 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400">Individual first <span className="text-cyan-300">→</span> Household expansion</div></div>
+              <div className="space-y-3">{[
+                ['Everyday card', 'Personal balance, global spend, simple controls', 'YOU'], ['Shared funding', 'Top up a partner, child, parent, or caregiver', 'FAMILY'], ['Purpose-bound money', 'Set merchant, amount, time, and category rules', 'POLICY'], ['Emergency access', 'Create transparent backup funds with approvals', 'TRUST'],
+              ].map(([title, body, label], index) => <div key={title} className={`grid grid-cols-[62px_1fr] gap-5 rounded-2xl border p-5 ${index === 0 ? 'border-cyan-300/35 bg-cyan-300/[0.07]' : 'border-white/10 bg-white/[0.025]'}`}><div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 font-mono text-[8px] text-cyan-300">{label}</div><div><h3 className="font-display text-xl font-light">{title}</h3><p className="mt-1 text-sm text-zinc-400">{body}</p></div></div>)}</div>
             </div>
+          )}
 
-            <h2 className="font-display font-light text-4xl sm:text-6xl mb-1">
-              KAMI
-            </h2>
-            <p className={`font-mono text-base font-semibold mb-2 ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-              &ldquo;Money that understands your family.&rdquo;
-            </p>
-            <p className={`font-mono text-xs max-w-xl mb-5 ${isSunlit ? 'text-[#5C4D44]' : 'text-zinc-400'}`}>
-              Financial infrastructure underneath. Natural language on top. Trust at every step.
-            </p>
-
-            <div className={`p-5 rounded-2xl border max-w-md w-full font-mono text-xs space-y-2 text-left mb-5 ${isSunlit ? 'bg-[#F2ECE1] border-[#E0D5C3]' : 'bg-white/[0.03] border-white/15'}`}>
-              <div className="flex justify-between">
-                <span className="text-zinc-500">Live Website:</span>
-                <a href="https://kami.mystic.cat" target="_blank" className={`underline underline-offset-2 font-semibold ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-                  https://kami.mystic.cat
-                </a>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-500">Demo Video:</span>
-                <a href="https://kami.mystic.cat/video" target="_blank" className="underline underline-offset-2">
-                  https://kami.mystic.cat/video
-                </a>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-500">GitHub Codebase:</span>
-                <a href="https://github.com/TheMystic07/KamiKardsWeb" target="_blank" className="underline underline-offset-2">
-                  github.com/TheMystic07/KamiKardsWeb
-                </a>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-500">Grant Alignment:</span>
-                <span className="text-emerald-500 font-bold">Stellar Community Fund (SCF)</span>
-              </div>
+          {currentSlide === 7 && (
+            <div>
+              <Eyebrow>How it works</Eyebrow><SlideTitle>A focused stack from wallet to checkout.</SlideTitle>
+              <div className="relative mt-12 grid gap-4 lg:grid-cols-4"><div className="pointer-events-none absolute left-[12%] right-[12%] top-10 hidden h-px bg-gradient-to-r from-cyan-300/20 via-cyan-300/70 to-cyan-300/20 lg:block" />{[
+                ['01', 'Stellar + Soroban', 'Assets, vault rules, approvals, and settlement state live on purpose-built payment rails.'], ['02', 'Kami orchestration', 'Balances, policy checks, card controls, receipts, and agentic workflows form the product layer.'], ['03', 'Licensed card issuer', 'The issuing partner handles regulated card issuance and card-network authorization.'], ['04', 'Visa acceptance', 'The merchant receives a standard Visa payment in the expected settlement flow.'],
+              ].map(([number, title, body]) => <div key={number} className="relative pt-1"><div className="relative z-10 flex h-20 w-20 items-center justify-center rounded-full border border-cyan-300/40 bg-[#071014] font-display text-2xl font-light text-cyan-300 shadow-[0_0_35px_rgba(34,211,238,.12)]">{number}</div><h3 className="mt-7 font-display text-2xl font-light">{title}</h3><p className="mt-3 max-w-[260px] text-sm leading-relaxed text-zinc-400">{body}</p></div>)}</div>
+              <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 border-t border-white/10 pt-5 font-mono text-[9px] uppercase tracking-[0.16em] text-zinc-500"><span>Non-custodial design target</span><span>Explicit user approvals</span><span>Issuer-led compliance</span><span>Observable transaction state</span></div>
             </div>
+          )}
 
-            <span className={`font-mono text-xs animate-pulse font-semibold ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-              ● READY FOR LIVE JUDGE DEMO &amp; TECHNICAL Q&amp;A
-            </span>
-          </div>
-        )}
+          {currentSlide === 8 && (
+            <div className="grid gap-12 lg:grid-cols-[1fr_1fr] lg:items-end">
+              <div><Eyebrow>Business model</Eyebrow><SlideTitle>A card business with software margins.</SlideTitle><p className="mt-7 max-w-xl text-lg leading-relaxed text-zinc-400">The same platform that powers one cardholder can support households, premium users, and future embedded card programs.</p></div>
+              <div>{[
+                ['01', 'Interchange share', 'Revenue participation on eligible card spend through the issuing program.'], ['02', 'Kami Plus', 'Premium controls, additional cards, advanced AI, and priority support.'], ['03', 'Embedded programs', 'Future APIs for communities, wallets, and fintechs that want Stellar-funded cards.'],
+              ].map(([number, title, body]) => <div key={number} className="grid grid-cols-[42px_1fr] gap-5 border-t border-white/10 py-6"><div className="font-mono text-xs text-cyan-300">{number}</div><div><h3 className="font-display text-2xl font-light">{title}</h3><p className="mt-2 text-sm leading-relaxed text-zinc-400">{body}</p></div></div>)}</div>
+              <div className="grid gap-4 border-t border-white/10 pt-7 sm:grid-cols-3 lg:col-span-2">{[['START', 'Crypto-native professionals'], ['EXPAND', 'Households + global earners'], ['PLATFORM', 'Wallets + fintech partners']].map(([label, value]) => <div key={label}><div className="font-mono text-[9px] tracking-[0.18em] text-zinc-600">{label}</div><div className="mt-2 text-sm text-zinc-300">{value}</div></div>)}</div>
+            </div>
+          )}
+
+          {currentSlide === 9 && (
+            <div className="grid gap-12 lg:grid-cols-[1.05fr_.95fr] lg:items-center">
+              <div><Eyebrow>The ask</Eyebrow><h2 className="max-w-3xl font-display text-5xl font-light leading-[0.98] tracking-[-0.045em] sm:text-6xl lg:text-[4.7rem]">Help us put Stellar in <span className="text-cyan-300">everyday wallets.</span></h2><p className="mt-7 max-w-2xl text-lg leading-relaxed text-zinc-300">We are seeking grant support, issuer collaboration, and pilot users to prove repeatable Stellar-funded Visa spending in the real world.</p><div className="mt-9 flex flex-wrap gap-3">{['Stellar integration', 'Issuer pilot', 'Security review', 'Launch cohort'].map((item) => <span key={item} className="rounded-full border border-white/10 bg-white/[0.035] px-4 py-2 font-mono text-[9px] uppercase tracking-[0.15em] text-zinc-300">{item}</span>)}</div></div>
+              <div className="rounded-[30px] border border-cyan-300/25 bg-cyan-300/[0.055] p-8"><div className="font-mono text-[9px] uppercase tracking-[0.2em] text-cyan-300">90-day pilot outcome</div><div className="mt-8 space-y-6">{[['01', 'Complete issuer + Stellar sandbox flow'], ['02', 'Ship controlled virtual-card beta'], ['03', 'Measure activation, spend, and repeat usage'], ['04', 'Publish a path to compliant scale']].map(([number, goal]) => <div key={number} className="flex gap-4 border-b border-white/10 pb-5 last:border-0 last:pb-0"><span className="font-mono text-xs text-cyan-300">{number}</span><span className="text-sm text-zinc-200">{goal}</span></div>)}</div></div>
+            </div>
+          )}
+        </section>
       </main>
 
-      {/* Speaker Notes Drawer */}
-      {showNotes && (
-        <div
-          className={`fixed bottom-16 inset-x-0 z-40 max-w-4xl mx-auto p-4 rounded-2xl border backdrop-blur-xl shadow-2xl animate-in slide-in-from-bottom-4 ${
-            isSunlit ? 'bg-[#FAF6EE]/95 border-[#D95338]/40 text-[#2C2018]' : 'bg-zinc-950/95 border-cyan-500/30 text-white'
-          }`}
-        >
-          <div className="flex justify-between items-center mb-1">
-            <span className={`font-mono text-[10px] uppercase tracking-widest font-bold ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-              SPEAKER NOTES (SLIDE {currentSlide + 1} OF {totalSlides})
-            </span>
-            <button onClick={() => setShowNotes(false)} className="text-xs font-mono text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
-              ✕
-            </button>
-          </div>
-          <p className={`text-xs font-sans leading-relaxed ${isSunlit ? 'text-[#4A3B32]' : 'text-zinc-300'}`}>
-            {slideNotes[currentSlide]}
-          </p>
+      <footer className="relative z-30 flex h-[64px] shrink-0 items-center justify-between border-t border-white/10 bg-black/45 px-4 backdrop-blur-xl sm:px-8">
+        <button type="button" onClick={prevSlide} disabled={currentSlide === 0} className="rounded-full border border-white/10 px-5 py-2 font-mono text-[10px] text-zinc-400 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-25">← Previous</button>
+        <div className="hidden items-center gap-2 md:flex" aria-label="Slide navigation">
+          {slideTitles.map((title, index) => (
+            <button
+              type="button"
+              key={title}
+              onClick={() => setCurrentSlide(index)}
+              aria-label={`Go to slide ${index + 1}: ${title}`}
+              className={`h-1.5 rounded-full transition-all duration-300 ${index === currentSlide ? 'w-8 bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,.65)]' : index < currentSlide ? 'w-3 bg-white/35 hover:bg-white/60' : 'w-3 bg-white/10 hover:bg-white/30'}`}
+            />
+          ))}
         </div>
-      )}
-
-      {/* Slide Overview Grid Modal */}
-      {showOverview && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl p-8 overflow-y-auto flex flex-col"
-          onClick={() => setShowOverview(false)}
-        >
-          <div className="max-w-6xl mx-auto w-full">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="font-display text-2xl text-white">Pitch Deck Overview ({totalSlides} Slides)</h3>
-              <button className="font-mono text-sm text-zinc-400 hover:text-white">✕ Close</button>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-              {[
-                '01. Money That Understands Your Family',
-                '02. The Problem: Broken Family Fintech',
-                '03. The Deterministic 6-Step Safety Loop',
-                '04. Live Intent Parser & Facts Hash',
-                '05. Seeded Sharma Household Demo',
-                '06. Why Stellar & SpacetimeDB Win',
-                '07. Architecture & ~31,300 LOC Metrics',
-                '08. Business Model & Unit Economics',
-                '09. Grant Roadmap & SCF Alignment',
-                '10. The Ask & Judge Q&A',
-              ].map((title, idx) => (
-                <div
-                  key={idx}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentSlide(idx);
-                    setShowOverview(false);
-                  }}
-                  className={`p-4 rounded-xl border text-left cursor-pointer transition-all ${
-                    currentSlide === idx
-                      ? 'bg-cyan-950/40 border-cyan-400 text-white shadow-[0_0_20px_rgba(0,240,255,0.2)]'
-                      : 'bg-white/[0.03] border-white/10 hover:border-white/30 text-zinc-400'
-                  }`}
-                >
-                  <span className="font-mono text-[10px] text-cyan-400 block mb-1">SLIDE {idx + 1}</span>
-                  <h4 className="font-display text-xs text-white line-clamp-2">{title}</h4>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bottom Deck Navigation Controller */}
-      <footer
-        className={`flex items-center justify-between px-6 sm:px-10 py-3 border-t z-30 transition-colors duration-300 ${
-          isSunlit ? 'bg-[#F6F0E7]/90 border-[#E8DFC8]/60 backdrop-blur-xl' : 'bg-black/70 border-white/10 backdrop-blur-xl'
-        }`}
-      >
-        <div className="flex items-center gap-2">
-          <button
-            onClick={prevSlide}
-            disabled={currentSlide === 0}
-            className={`px-4 py-2 rounded-xl border text-xs font-mono disabled:opacity-30 transition-all ${
-              isSunlit ? 'bg-[#EFE6DA] border-[#D9CEBA] text-[#4A3B32]' : 'bg-white/[0.05] border-white/10 text-white hover:bg-white/10'
-            }`}
-          >
-            ← Previous
-          </button>
-
-          <button
-            onClick={nextSlide}
-            disabled={currentSlide === totalSlides - 1}
-            className={`px-5 py-2 rounded-xl font-semibold text-xs font-mono disabled:opacity-30 transition-all shadow-lg ${
-              isSunlit ? 'bg-[#D95338] text-white hover:bg-[#C2432A]' : 'bg-white text-black hover:bg-zinc-200'
-            }`}
-          >
-            Next Slide →
-          </button>
-        </div>
-
-        <div className={`flex items-center gap-4 font-mono text-[11px] ${isSunlit ? 'text-[#7C6E65]' : 'text-zinc-400'}`}>
-          <span className="hidden sm:inline">Use Scroll / ← → Arrow Keys</span>
-          <span>•</span>
-          <span className={`font-semibold ${isSunlit ? 'text-[#D95338]' : 'text-cyan-400'}`}>
-            KAMI — STELLAR HACKATHON &amp; GRANT DECK
-          </span>
-        </div>
+        <button type="button" onClick={nextSlide} disabled={currentSlide === totalSlides - 1} className="rounded-full bg-white px-5 py-2 font-mono text-[10px] font-semibold text-black transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-25">Next →</button>
       </footer>
+
+      {showNotes && <aside className="fixed bottom-[78px] left-1/2 z-40 w-[min(760px,calc(100%-32px))] -translate-x-1/2 rounded-2xl border border-cyan-300/25 bg-[#080b0e]/95 p-5 shadow-2xl backdrop-blur-xl"><div className="mb-2 font-mono text-[9px] uppercase tracking-[0.2em] text-cyan-300">Speaker notes · Slide {currentSlide + 1}</div><p className="text-sm leading-relaxed text-zinc-300">{slideNotes[currentSlide]}</p></aside>}
+
+      {showOverview && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/90 p-6 backdrop-blur-xl sm:p-10"><div className="mx-auto max-w-6xl"><div className="mb-8 flex items-center justify-between"><div><div className="font-display text-3xl font-light">Deck overview</div><div className="mt-1 font-mono text-[9px] uppercase tracking-[0.18em] text-zinc-500">Choose a slide to present</div></div><button type="button" onClick={() => setShowOverview(false)} className="rounded-full border border-white/10 px-4 py-2 font-mono text-[10px] text-zinc-300">Close</button></div><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{slideTitles.map((title, index) => <button type="button" key={title} onClick={() => { setCurrentSlide(index); setShowOverview(false); }} className={`min-h-40 rounded-2xl border p-5 text-left transition ${currentSlide === index ? 'border-cyan-300/50 bg-cyan-300/10' : 'border-white/10 bg-white/[0.025] hover:border-white/25'}`}><div className="font-mono text-[9px] text-cyan-300">{String(index + 1).padStart(2, '0')}</div><div className="mt-8 font-display text-2xl font-light leading-tight">{title}</div></button>)}</div></div></div>
+      )}
+
+      <style jsx global>{`
+        @keyframes slide-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-enter { animation: slide-enter 420ms cubic-bezier(.2,.8,.2,1) both; }
+        @media (prefers-reduced-motion: reduce) { .slide-enter { animation: none; } }
+      `}</style>
     </div>
   );
 }

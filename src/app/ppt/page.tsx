@@ -1,8 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import CosmicBackground from '@/components/CosmicBackground';
 import CylinderCardCarousel, { StellarLogoSVG } from '@/components/CylinderCardCarousel';
+
+interface Slide {
+  id: number;
+  tag: string;
+  title: string;
+  subtitle?: string;
+  notes?: string;
+  content: React.ReactNode;
+}
 
 export default function PitchDeckPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -14,19 +23,28 @@ export default function PitchDeckPage() {
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(true);
 
-  // Slide 3: Interactive Architecture step
-  const [activeStep, setActiveStep] = useState(0);
+  // Slide 3: Interactive Natural Language Parser Demo
+  const [samplePrompt, setSamplePrompt] = useState('Give Maya ₹2,000 until Sunday for groceries');
+  const [parsedResult, setParsedResult] = useState<{
+    recipient: string;
+    amount: string;
+    expiry: string;
+    category: string;
+    status: 'parsed' | 'approved' | 'executed';
+  }>({
+    recipient: 'Maya (Daughter)',
+    amount: '₹2,000 (~24.10 USDC)',
+    expiry: 'Sunday 11:59 PM',
+    category: 'Groceries / Food Only',
+    status: 'parsed',
+  });
 
-  // Slide 4: Contract tab selector
-  const [contractTab, setContractTab] = useState<'vault' | 'settle' | 'cashback'>('vault');
-
-  // Slide 6: 3D Card Tier preview
-  const [previewTier, setPreviewTier] = useState<'obsidian' | 'founder' | 'cyber' | 'virtual'>('obsidian');
-
-  // Slide 7: Live POS Simulator state
-  const [simAmount, setSimAmount] = useState('45.00');
-  const [simStatus, setSimStatus] = useState<'idle' | 'authorizing' | 'settled'>('idle');
-  const [simTx, setSimTx] = useState<{ hash: string; latency: string; cashback: string } | null>(null);
+  // Slide 6: Family Sharma Household Interactive Cards Demo
+  const [familyMembers, setFamilyMembers] = useState([
+    { name: 'Aarav Sharma', role: 'Family Admin', balance: '₹85,000 ($1,020 USDC)', cardStatus: 'Active', limit: '₹1.5 Lakh' },
+    { name: 'Maya Sharma', role: 'Daughter (Teen)', balance: '₹2,000 ($24.10 USDC)', cardStatus: 'Active', limit: '₹2,000 / week' },
+    { name: 'Rohan Sharma', role: 'Son (College)', balance: '₹15,000 ($180.50 USDC)', cardStatus: 'Active', limit: '₹15,000 / mo' },
+  ]);
 
   // Timer effect
   useEffect(() => {
@@ -45,19 +63,50 @@ export default function PitchDeckPage() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handleSimulateSwipe = () => {
-    setSimStatus('authorizing');
-    setSimTx(null);
-    setTimeout(() => {
-      setSimStatus('settled');
-      const hash = Math.random().toString(16).substring(2, 8) + '...' + Math.random().toString(16).substring(2, 6);
-      const latency = (Math.random() * 0.6 + 2.8).toFixed(1);
-      const cashback = (parseFloat(simAmount) * 0.035).toFixed(2);
-      setSimTx({ hash, latency, cashback });
-    }, 2800);
+  const handleRunParser = (promptText: string) => {
+    setSamplePrompt(promptText);
+    if (promptText.includes('Maya')) {
+      setParsedResult({
+        recipient: 'Maya (Daughter)',
+        amount: '₹2,000 (~24.10 USDC)',
+        expiry: 'Sunday 11:59 PM',
+        category: 'Groceries / General',
+        status: 'parsed',
+      });
+    } else if (promptText.includes('Rohan') || promptText.includes('15k')) {
+      setParsedResult({
+        recipient: 'Rohan (College)',
+        amount: '₹15,000 (~180.50 USDC)',
+        expiry: 'End of Month',
+        category: 'Tuition & Books',
+        status: 'parsed',
+      });
+    } else if (promptText.includes('1.5 lakh') || promptText.includes('Dad')) {
+      setParsedResult({
+        recipient: 'Aarav (Dad)',
+        amount: '₹1,50,000 (~1,805.00 USDC)',
+        expiry: 'Immediate Transfer',
+        category: 'Family Vault Pool',
+        status: 'parsed',
+      });
+    } else {
+      setParsedResult({
+        recipient: 'Family Member',
+        amount: '₹5,000 (~60.20 USDC)',
+        expiry: 'Instant Swipe',
+        category: 'General Spend',
+        status: 'parsed',
+      });
+    }
   };
 
-  const totalSlides = 9;
+  const toggleCardFreeze = (index: number) => {
+    setFamilyMembers((prev) =>
+      prev.map((m, i) => (i === index ? { ...m, cardStatus: m.cardStatus === 'Active' ? 'Frozen' : 'Active' } : m))
+    );
+  };
+
+  const totalSlides = 10;
 
   const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev < totalSlides - 1 ? prev + 1 : prev));
@@ -104,17 +153,17 @@ export default function PitchDeckPage() {
 
   const progressPercent = ((currentSlide + 1) / totalSlides) * 100;
 
-  // Speaker notes per slide
   const slideNotes = [
-    'Welcome judges. Kami Kards solves the last-mile problem of crypto: spending non-custodial stablecoins on physical and virtual Visa cards in <3.5s with zero FX spread.',
-    'Highlight the point-of-sale friction: EVM chains cause terminal timeouts, and centralized crypto cards take custody of user keys.',
-    'Walk through the 5-step transaction lifecycle from card tap to Soroban atomic path payment execution.',
-    'Present the actual Soroban Rust contract code. Explain non-custodial authorization checks and deterministic ledger event emission.',
-    'Benchmark comparison: Show why Stellar SCP consensus and native Circle USDC beat Ethereum and Solana for consumer payment rails.',
-    'Showcase the hardware & software suite: 18g solid steel physical cards, instant virtual cards, and sovereign mobile enclave app.',
-    'Demonstrate the live interactive POS swipe simulator right on the slide. Show judges the instant <3.5s settlement and XLM cashback.',
-    'Post-hackathon trajectory: Testnet audit, SCF grant alignment, and Visa Fintech Fast Track issuer pilot.',
-    'Wrap up the pitch, recap key breakthroughs, and invite judges for technical Q&A.',
+    'Welcome judges. Traditional fintech forces users to understand the product. Kami makes the product understand the user. Natural language financial OS with Stellar crypto rails underneath.',
+    'Explain the problem: setting allowances or spending rules takes 7+ confusing steps in legacy apps. Kami enables a single sentence execution like "Give Maya ₹2,000 until Sunday".',
+    'Demonstrate the real-time AI parser (Qwen) parsing natural language numbers like "15k" and "1.5 lakh", previewing safety checks, and executing via Privy + Stellar.',
+    'System architecture walkthrough: Expo 57 Mobile -> Bun/Fastify Backend -> SpacetimeDB 2.8 Realtime DB -> Stellar / Horizon + KripiCard API.',
+    'Zero-fluff tech stack breakdown: SpacetimeDB 2.8 in Rust, Qwen AI, Privy MPC Auth, Stellar Horizon, Fastify 5, React Native Skia.',
+    'The Family & Household Management layer: Seeded Sharma Household demo showing parental limit controls, instant allowance routing, and live card freezing.',
+    'Pay-anyone QR flows & Crypto Pool: Converting pooled USDC / XLM into merchant QR scans in <3.5s with zero foreign exchange fees.',
+    'Current Prototype Status: Working end-to-end with persistent AI chats, real card-provider integration, admin console, and Vitest test suite.',
+    'Unfair advantage: Stellar 3.2s settlement + SpacetimeDB live synchronization + Qwen conversational safety guardrails.',
+    'Final close: "Financial infrastructure underneath. Natural language on top. Trust at every step." Open for judge Q&A.',
   ];
 
   return (
@@ -134,13 +183,12 @@ export default function PitchDeckPage() {
                 HACKATHON DECK
               </span>
             </div>
-            <span className="font-mono text-[8px] text-zinc-400 tracking-wider">STELLAR &amp; SOROBAN ECOSYSTEM</span>
+            <span className="font-mono text-[8px] text-zinc-400 tracking-wider">MONEY THAT UNDERSTANDS YOUR FAMILY</span>
           </div>
         </div>
 
         {/* Pitch Timer & Interactive Controls */}
         <div className="flex items-center gap-3 font-mono text-xs">
-          {/* Pitch Timer */}
           <div
             onClick={() => setIsTimerRunning(!isTimerRunning)}
             className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/[0.05] border border-white/10 text-zinc-300 cursor-pointer hover:text-white"
@@ -194,697 +242,600 @@ export default function PitchDeckPage() {
 
       {/* Dynamic Slide Stage */}
       <main className="flex-1 flex flex-col justify-center max-w-6xl w-full mx-auto px-4 sm:px-8 lg:px-12 py-6 z-10 overflow-visible">
-        {/* SLIDE 1: Title Slide with Live 3D Cylinder Card Carousel */}
+        {/* SLIDE 1: Title & The Big Idea */}
         {currentSlide === 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-in fade-in zoom-in-95 duration-200">
             <div className="lg:col-span-7 flex flex-col items-start text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono text-[10px] tracking-widest uppercase mb-4">
                 <StellarLogoSVG className="w-3.5 h-3.5 text-cyan-400" />
-                <span>STELLAR HACKATHON 2026 • DEMO STAGE</span>
+                <span>STELLAR HACKATHON 2026 • AI FINANCIAL OS</span>
               </div>
 
               <h1 className="font-display font-light text-4xl sm:text-6xl tracking-tight text-white leading-[1.05] mb-4">
-                Non-Custodial Visa Debit on Stellar.
+                Money That Understands Your Family.
               </h1>
 
               <p className="font-mono text-xs sm:text-sm text-zinc-300 max-w-xl font-light leading-relaxed mb-6">
-                Direct point-of-sale spending for native USDC &amp; XLM. Powered by Soroban smart vaults with sub-3.5s deterministic settlement and 0% FX fees.
+                Traditional fintech makes users understand the product. Kami makes the product understand the user. Natural language conversational AI on top of Stellar infrastructure and programmable cards.
               </p>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-lg font-mono text-xs">
                 <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                  <span className="text-zinc-500 text-[9px] block uppercase">SETTLEMENT</span>
-                  <span className="text-cyan-400 font-bold text-sm mt-0.5 block">&lt; 3.5s Finality</span>
+                  <span className="text-zinc-500 text-[9px] block uppercase">AI ENGINE</span>
+                  <span className="text-cyan-400 font-bold text-sm mt-0.5 block">Qwen Financial LLM</span>
                 </div>
                 <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-                  <span className="text-zinc-500 text-[9px] block uppercase">SMART CONTRACTS</span>
-                  <span className="text-emerald-400 font-bold text-sm mt-0.5 block">Soroban (Rust)</span>
+                  <span className="text-zinc-500 text-[9px] block uppercase">REALTIME DB</span>
+                  <span className="text-emerald-400 font-bold text-sm mt-0.5 block">SpacetimeDB 2.8</span>
                 </div>
                 <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 col-span-2 sm:col-span-1">
-                  <span className="text-zinc-500 text-[9px] block uppercase">NETWORK COST</span>
-                  <span className="text-white font-bold text-sm mt-0.5 block">0.00001 XLM</span>
+                  <span className="text-zinc-500 text-[9px] block uppercase">SETTLEMENT</span>
+                  <span className="text-purple-400 font-bold text-sm mt-0.5 block">Stellar / Horizon</span>
                 </div>
               </div>
             </div>
 
-            {/* Embedded Live 3D Cylinder Carousel directly on the slide with ample breathing room */}
+            {/* Embedded Live 3D Cylinder Carousel directly on the slide */}
             <div className="lg:col-span-5 h-[420px] sm:h-[480px] w-full relative flex items-center justify-center overflow-visible">
               <CylinderCardCarousel scale={0.88} />
               <div className="absolute bottom-1 font-mono text-[8px] text-zinc-500 uppercase tracking-widest pointer-events-none">
-                ● Live 3D WebGL Cylinder Deck • Cursor Tilt
+                ● Live 3D Programmable Cards • Powered by KripiCard &amp; Stellar
               </div>
             </div>
           </div>
         )}
 
-        {/* SLIDE 2: The Real Technical Friction in Crypto Cards */}
+        {/* SLIDE 2: The Core Problem: Traditional Fintech is Clunky */}
         {currentSlide === 1 && (
           <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
             <div>
               <span className="font-mono text-xs text-cyan-400 uppercase tracking-widest block mb-1">
-                02 / THE CORE FRICTION
+                02 / THE PROBLEM
               </span>
               <h2 className="font-display font-light text-3xl sm:text-4xl text-white">
-                Why Crypto Cards Break in the Real World
+                Traditional Fintech Demands User Effort
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-3">
+              {/* Legacy Way */}
               <div className="p-6 rounded-2xl bg-red-950/20 border border-red-500/30 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-2xl">⏳</span>
-                    <span className="font-mono text-[10px] text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
-                      POS TIMEOUT
-                    </span>
+                    <span className="font-mono text-xs text-red-400 font-bold">LEGACY BANKING APPS</span>
+                    <span className="text-xs font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded">7+ STEPS</span>
                   </div>
-                  <h3 className="font-display text-xl text-white mb-2">EVM Latency Fails Swipes</h3>
-                  <p className="text-xs text-zinc-300 font-sans leading-relaxed">
-                    Visa card readers timeout after <strong>4.5 seconds</strong>. Ethereum and rollups take 12 to 60 seconds for deterministic finality, resulting in constant terminal declines at registers.
-                  </p>
-                </div>
-                <span className="font-mono text-[10px] text-red-400 pt-4 border-t border-white/5">
-                  12s - 60s BLOCK TIME
-                </span>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-red-950/20 border border-red-500/30 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-2xl">🔓</span>
-                    <span className="font-mono text-[10px] text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
-                      CUSTODIAL RISK
-                    </span>
+                  <h3 className="font-display text-xl text-white mb-3">Multi-Step Form Friction</h3>
+                  <div className="p-4 rounded-xl bg-black/40 border border-red-500/20 font-mono text-xs text-zinc-400 space-y-2">
+                    <div className="line-through text-red-400">1. Open Bank App &amp; Login</div>
+                    <div className="line-through text-red-400">2. Find Family Member Profile</div>
+                    <div className="line-through text-red-400">3. Select Allowance / Sub-account</div>
+                    <div className="line-through text-red-400">4. Type exact numerical amount</div>
+                    <div className="line-through text-red-400">5. Select calendar expiry date</div>
+                    <div className="line-through text-red-400">6. Set category restriction toggles</div>
+                    <div className="line-through text-red-400">7. Enter OTP &amp; Confirm</div>
                   </div>
-                  <h3 className="font-display text-xl text-white mb-2">Centralized Exchange Cards</h3>
-                  <p className="text-xs text-zinc-300 font-sans leading-relaxed">
-                    Existing crypto cards (Coinbase, Crypto.com) are 100% custodial. Users forfeit private keys. When platforms halt withdrawals, cardholder balances are wiped out.
-                  </p>
                 </div>
-                <span className="font-mono text-[10px] text-red-400 pt-4 border-t border-white/5">
-                  NOT YOUR KEYS, NOT YOUR MONEY
-                </span>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-red-950/20 border border-red-500/30 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-2xl">💸</span>
-                    <span className="font-mono text-[10px] text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
-                      UNVIABLE OVERHEAD
-                    </span>
-                  </div>
-                  <h3 className="font-display text-xl text-white mb-2">$4 Gas on $3.50 Coffee + 3% FX</h3>
-                  <p className="text-xs text-zinc-300 font-sans leading-relaxed">
-                    Unpredictable gas spikes make everyday retail micropayments economically unfeasible. In addition, traditional neobanks charge a quiet 3% hidden foreign exchange markup.
-                  </p>
-                </div>
-                <span className="font-mono text-[10px] text-red-400 pt-4 border-t border-white/5">
-                  ECONOMICALLY UNFEASIBLE
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* SLIDE 3: Interactive On-Chain System Architecture */}
-        {currentSlide === 2 && (
-          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-end">
-              <div>
-                <span className="font-mono text-xs text-cyan-400 uppercase tracking-widest block mb-1">
-                  03 / SYSTEM ARCHITECTURE
-                </span>
-                <h2 className="font-display font-light text-3xl sm:text-4xl text-white">
-                  Sub-3.5s Transaction Lifecycle
-                </h2>
-              </div>
-              <span className="font-mono text-xs text-zinc-400 hidden sm:block">
-                Click any step to inspect technical execution
-              </span>
-            </div>
-
-            {/* Interactive Step Navigator */}
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 my-3">
-              {[
-                { title: '1. Deposit', desc: 'Non-custodial USDC vault deposit on Stellar', badge: 'SOROBAN' },
-                { title: '2. Swipe', desc: 'Card tapped at any Visa POS terminal worldwide', badge: 'VISA POS' },
-                { title: '3. Auth Relay', desc: 'Cryptographic allowance & limit verification', badge: 'MPC RELAY' },
-                { title: '4. Atomic Settle', desc: 'Stellar SCP closes ledger in <3.5s with 0% FX', badge: 'SCP LEDGER' },
-                { title: '5. Cashback', desc: 'Instant XLM rewards credited to card vault', badge: 'REWARDS' },
-              ].map((step, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveStep(idx)}
-                  className={`p-4 rounded-xl border text-left transition-all ${
-                    activeStep === idx
-                      ? 'bg-cyan-950/40 border-cyan-400 text-white shadow-[0_0_20px_rgba(0,240,255,0.2)]'
-                      : 'bg-white/[0.03] border-white/10 hover:border-white/20 text-zinc-400'
-                  }`}
-                >
-                  <span className="font-mono text-[9px] text-cyan-400 block mb-1">{step.badge}</span>
-                  <div className="font-display font-semibold text-xs text-white mb-1">{step.title}</div>
-                  <p className="text-[10px] text-zinc-400 font-sans line-clamp-2">{step.desc}</p>
-                </button>
-              ))}
-            </div>
-
-            {/* Dynamic Step Detail Inspector */}
-            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/15 font-mono text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <span className="text-cyan-400 font-bold text-sm block mb-1">
-                  {activeStep === 0 && 'STEP 01: Non-Custodial Vault Provisioning on Soroban'}
-                  {activeStep === 1 && 'STEP 02: Visa Authorization Webhook Initiation'}
-                  {activeStep === 2 && 'STEP 03: Multi-Party Computation (MPC) Proof Validation'}
-                  {activeStep === 3 && 'STEP 04: Stellar Consensus SCP Deterministic Settlement'}
-                  {activeStep === 4 && 'STEP 05: On-Chain XLM Cashback Payout Protocol'}
-                </span>
-                <p className="text-xs text-zinc-300 font-sans leading-relaxed">
-                  {activeStep === 0 &&
-                    'User deposits native Circle USDC directly into their audited Soroban smart contract. The contract enforces daily spend limits, geo-fencing rules, and auto-yield compounding while maintaining sovereign user ownership.'}
-                  {activeStep === 1 &&
-                    'When a physical or Apple Pay card swipe occurs at any merchant in 180+ countries, Visa routes an ISO 8583 authorization payload to the certified Kami issuing relayer.'}
-                  {activeStep === 2 &&
-                    'The Kami relayer verifies that the transaction conforms to the user pre-authorized smart vault policy and cryptographic spending allowance without holding private keys.'}
-                  {activeStep === 3 &&
-                    'Soroban contract executes an atomic path payment on the Stellar native DEX, converting USDC to the merchant local currency in 3.2 seconds at spot interbank rates with 0% markup.'}
-                  {activeStep === 4 &&
-                    'Upon successful ledger close, the contract automatically mints/distributes 3.5% - 5.0% XLM cashback straight into the cardholder non-custodial smart vault.'}
+                <p className="text-xs text-zinc-400 font-sans mt-4 pt-3 border-t border-white/5">
+                  Complex forms lead to abandoned transactions, no context, and zero natural family budgeting.
                 </p>
               </div>
 
-              <div className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono text-xs shrink-0">
-                ● 3.2s LATENCY VERIFIED
+              {/* The Kami Way */}
+              <div className="p-6 rounded-2xl bg-cyan-950/30 border border-cyan-500/40 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-mono text-xs text-cyan-300 font-bold">KAMI CONVERSATIONAL OS</span>
+                    <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">1 SENTENCE</span>
+                  </div>
+                  <h3 className="font-display text-xl text-white mb-3">Natural Language Execution</h3>
+                  <div className="p-5 rounded-xl bg-black/60 border border-cyan-500/30 font-mono text-sm text-cyan-300 shadow-lg flex items-center gap-3">
+                    <span className="text-2xl">🗣️</span>
+                    <span>&ldquo;Give Maya ₹2,000 until Sunday for groceries.&rdquo;</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-4 font-mono text-[11px] text-zinc-300">
+                    <div className="p-2 rounded bg-white/[0.04] border border-white/10">
+                      ✓ Auto-parses colloquial amounts (&ldquo;15k&rdquo;, &ldquo;1.5 lakh&rdquo;)
+                    </div>
+                    <div className="p-2 rounded bg-white/[0.04] border border-white/10">
+                      ✓ Instant contextual card spending limits
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-emerald-400 font-sans mt-4 pt-3 border-t border-cyan-500/20 font-semibold">
+                  Kami understands → Prepares → Previews → Asks for approval → Executes safely.
+                </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* SLIDE 4: Real Soroban Smart Contract Code (Rust) */}
-        {currentSlide === 3 && (
-          <div className="flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-end">
-              <div>
-                <span className="font-mono text-xs text-cyan-400 uppercase tracking-widest block mb-1">
-                  04 / CONTRACT IMPLEMENTATION
-                </span>
-                <h2 className="font-display font-light text-3xl text-white">
-                  Soroban Smart Contract (Rust SDK v21)
-                </h2>
-              </div>
-
-              {/* Code Tab Switcher */}
-              <div className="flex gap-1 bg-white/[0.05] p-1 rounded-lg border border-white/10 font-mono text-xs">
-                <button
-                  onClick={() => setContractTab('vault')}
-                  className={`px-3 py-1 rounded ${
-                    contractTab === 'vault' ? 'bg-cyan-500 text-black font-semibold' : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  vault.rs
-                </button>
-                <button
-                  onClick={() => setContractTab('settle')}
-                  className={`px-3 py-1 rounded ${
-                    contractTab === 'settle' ? 'bg-cyan-500 text-black font-semibold' : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  settlement.rs
-                </button>
-                <button
-                  onClick={() => setContractTab('cashback')}
-                  className={`px-3 py-1 rounded ${
-                    contractTab === 'cashback' ? 'bg-cyan-500 text-black font-semibold' : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  cashback.rs
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-2xl bg-[#08090d] border border-white/20 p-5 font-mono text-[11px] sm:text-xs overflow-x-auto shadow-2xl">
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10 text-zinc-500 text-[10px]">
-                <span>contracts/src/{contractTab}.rs</span>
-                <span className="text-emerald-400">● COMPILES TO WASM (0 ERRORS)</span>
-              </div>
-
-              <pre className="text-zinc-300 font-mono leading-relaxed">
-                <code>
-                  {contractTab === 'vault' &&
-                    `#[contract]
-pub struct KamiVaultContract;
-
-#[contractimpl]
-impl KamiVaultContract {
-    /// Authorize and settle an instant Visa POS point-of-sale card transaction
-    pub fn authorize_pos_spend(
-        env: Env,
-        cardholder: Address,
-        spend_amount: i128,
-        merchant_currency: Symbol,
-        nonce: u64,
-    ) -> Result<bool, Error> {
-        cardholder.require_auth(); // Sovereign non-custodial authorization check
-        
-        let mut vault = Self::get_vault(&env, &cardholder)?;
-        require!(vault.is_active && !vault.is_frozen, Error::VaultFrozen);
-        require!(spend_amount <= vault.daily_limit_remaining, Error::ExceedsDailyLimit);
-        
-        // Execute atomic balance debit on Soroban
-        vault.balance = vault.balance.checked_sub(spend_amount).ok_or(Error::InsufficientFunds)?;
-        vault.daily_limit_remaining -= spend_amount;
-        Self::save_vault(&env, &cardholder, &vault);
-        
-        // Emit deterministic telemetry event to Stellar ledger
-        env.events().publish((symbol_short!("pos_spend"), cardholder), (spend_amount, merchant_currency, nonce));
-        Ok(true)
-    }
-}`}
-
-                  {contractTab === 'settle' &&
-                    `#[contractimpl]
-impl KamiSettlementAdapter {
-    /// Atomic path payment converting USDC -> Merchant local fiat currency
-    pub fn execute_path_payment(
-        env: Env,
-        source_asset: Address,
-        dest_asset: Address,
-        max_source_amount: i128,
-        dest_amount: i128,
-    ) -> Result<i128, Error> {
-        // Calls Stellar native liquidity pool router for 0% slippage execution
-        let actual_spent = env.invoke_contract::<i128>(
-            &DEX_ROUTER_ADDRESS,
-            &Symbol::new(&env, "swap_exact_dest"),
-            vec![&env, source_asset.into_val(&env), dest_asset.into_val(&env), max_source_amount.into_val(&env), dest_amount.into_val(&env)]
-        );
-        Ok(actual_spent)
-    }
-}`}
-
-                  {contractTab === 'cashback' &&
-                    `#[contractimpl]
-impl KamiCashbackProtocol {
-    /// Disburse instant XLM rewards on verified transaction receipt
-    pub fn credit_cashback(
-        env: Env,
-        cardholder: Address,
-        settled_usd_amount: i128,
-        tier_cashback_bps: u32, // e.g. 350 bps = 3.5%
-    ) -> Result<i128, Error> {
-        let reward_xlm = (settled_usd_amount * (tier_cashback_bps as i128)) / 10_000;
-        let pool = Self::get_reward_pool(&env)?;
-        pool.transfer_to(&cardholder, reward_xlm)?;
-        env.events().publish((symbol_short!("cashback"), cardholder), reward_xlm);
-        Ok(reward_xlm)
-    }
-}`}
-                </code>
-              </pre>
-            </div>
-          </div>
-        )}
-
-        {/* SLIDE 5: Benchmark Comparison (Why Stellar Wins) */}
-        {currentSlide === 4 && (
+        {/* SLIDE 3: Interactive Natural Language Parser Demo */}
+        {currentSlide === 2 && (
           <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
             <div>
               <span className="font-mono text-xs text-cyan-400 uppercase tracking-widest block mb-1">
-                05 / BENCHMARK COMPARISON
+                03 / INTERACTIVE AI ENGINE
               </span>
               <h2 className="font-display font-light text-3xl sm:text-4xl text-white">
-                Technical Benchmarks Across Chains
+                Live Intent Parser &amp; Safety Preview
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-2">
-              <div className="p-5 rounded-2xl bg-cyan-950/30 border border-cyan-400/50 flex flex-col justify-between">
-                <div>
-                  <span className="font-mono text-xs text-cyan-300 font-bold block mb-1">★ KAMI ON STELLAR</span>
-                  <div className="text-3xl font-display text-white font-light mt-2">3.2s</div>
-                  <span className="text-[10px] font-mono text-emerald-400 block mb-3">Deterministic Finality</span>
-                  <div className="text-xl font-mono text-cyan-300 font-semibold">$0.00001</div>
-                  <span className="text-[10px] text-zinc-400">Gas fee per swipe</span>
-                </div>
-                <div className="mt-4 pt-2 border-t border-cyan-500/30 text-[10px] font-mono text-emerald-300">
-                  ✓ 100% Non-Custodial
-                </div>
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 my-2 items-center">
+              {/* Left Column: Sample Prompts */}
+              <div className="lg:col-span-6 flex flex-col gap-3">
+                <span className="font-mono text-xs text-zinc-400">TRY NATURAL LANGUAGE INPUTS:</span>
 
-              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col justify-between">
-                <div>
-                  <span className="font-mono text-xs text-zinc-400 block mb-1">ETHEREUM / L2s</span>
-                  <div className="text-3xl font-display text-zinc-300 font-light mt-2">15s - 60s</div>
-                  <span className="text-[10px] font-mono text-red-400 block mb-3">Frequent POS Timeouts</span>
-                  <div className="text-xl font-mono text-red-400 font-semibold">$2.50 - $25.00</div>
-                  <span className="text-[10px] text-zinc-400">Gas spikes on volume</span>
-                </div>
-                <div className="mt-4 pt-2 border-t border-white/10 text-[10px] font-mono text-zinc-500">
-                  Hybrid / Rollup Bridge
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col justify-between">
-                <div>
-                  <span className="font-mono text-xs text-zinc-400 block mb-1">SOLANA</span>
-                  <div className="text-3xl font-display text-zinc-300 font-light mt-2">0.4s - 3.0s</div>
-                  <span className="text-[10px] font-mono text-yellow-400 block mb-3">Reorg &amp; Drop Risk</span>
-                  <div className="text-xl font-mono text-zinc-300 font-semibold">$0.002</div>
-                  <span className="text-[10px] text-zinc-400">Priority fee required</span>
-                </div>
-                <div className="mt-4 pt-2 border-t border-white/10 text-[10px] font-mono text-zinc-500">
-                  Custodial CEX Wrappers
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col justify-between">
-                <div>
-                  <span className="font-mono text-xs text-zinc-400 block mb-1">TRADITIONAL BANKS</span>
-                  <div className="text-3xl font-display text-zinc-300 font-light mt-2">2 - 3 Days</div>
-                  <span className="text-[10px] font-mono text-zinc-400 block mb-3">Batch Settlement</span>
-                  <div className="text-xl font-mono text-red-400 font-semibold">3.0% FX</div>
-                  <span className="text-[10px] text-zinc-400">Hidden currency spread</span>
-                </div>
-                <div className="mt-4 pt-2 border-t border-white/10 text-[10px] font-mono text-red-400">
-                  100% Custodial / Account Freeze
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* SLIDE 6: Product Lineup & 3D Cards */}
-        {currentSlide === 5 && (
-          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div>
-              <span className="font-mono text-xs text-cyan-400 uppercase tracking-widest block mb-1">
-                06 / HARDWARE &amp; APP SUITE
-              </span>
-              <h2 className="font-display font-light text-3xl sm:text-4xl text-white">
-                Physical Metal &amp; Instant Virtual Cards
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 my-2 items-center">
-              {/* Left Column: Interactive Tier Selector */}
-              <div className="md:col-span-6 flex flex-col gap-3">
                 {[
-                  {
-                    id: 'obsidian',
-                    name: 'Obsidian Metal (18g Solid Steel)',
-                    desc: 'Heavyweight matte black steel with EMV contact chip, NFC, and 3.5% XLM cashback.',
-                    highlight: 'Flagship Edition',
-                  },
-                  {
-                    id: 'founder',
-                    name: 'Stellar Founder (24K Gold Plated)',
-                    desc: 'Limited Ceramic composite with VIP staking and 5.0% XLM cashback payout.',
-                    highlight: '5.0% XLM Cashback',
-                  },
-                  {
-                    id: 'cyber',
-                    name: 'Cyber Titanium',
-                    desc: 'Laser-etched cyan brushed titanium with instant disposable card numbers.',
-                    highlight: 'Laser Etched',
-                  },
-                  {
-                    id: 'virtual',
-                    name: 'Instant Virtual Card',
-                    desc: 'Issued in <3.5s on Stellar. Instantly provisions to Apple Pay & Google Wallet.',
-                    highlight: 'Zero-Wait Issuance',
-                  },
-                ].map((tier) => (
+                  { text: 'Give Maya ₹2,000 until Sunday for groceries', tag: 'Colloquial Allowance' },
+                  { text: 'Send 15k to Rohan for college tuition', tag: 'Short-Form Number (15k)' },
+                  { text: 'Transfer 1.5 lakh to Dad for household savings', tag: 'Indian Denomination (Lakh)' },
+                ].map((sample, idx) => (
                   <button
-                    key={tier.id}
-                    onClick={() => setPreviewTier(tier.id as any)}
-                    className={`p-3.5 rounded-xl border text-left transition-all ${
-                      previewTier === tier.id
-                        ? 'bg-white/10 border-white text-white shadow-lg'
-                        : 'bg-white/[0.02] border-white/10 text-zinc-400 hover:text-white'
+                    key={idx}
+                    onClick={() => handleRunParser(sample.text)}
+                    className={`p-3.5 rounded-xl border text-left font-mono text-xs transition-all ${
+                      samplePrompt === sample.text
+                        ? 'bg-cyan-950/40 border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.2)]'
+                        : 'bg-white/[0.03] border-white/10 hover:border-white/25 text-zinc-300'
                     }`}
                   >
-                    <div className="flex justify-between items-center mb-0.5">
-                      <span className="font-mono text-xs font-semibold text-white">{tier.name}</span>
-                      <span className="font-mono text-[9px] text-cyan-400">{tier.highlight}</span>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[10px] text-zinc-500 uppercase">{sample.tag}</span>
+                      <span className="text-cyan-400 text-[10px]">Test Prompt →</span>
                     </div>
-                    <p className="text-[11px] text-zinc-400 font-sans">{tier.desc}</p>
+                    <div className="text-white font-medium">&ldquo;{sample.text}&rdquo;</div>
                   </button>
                 ))}
               </div>
 
-              {/* Right Column: Live Interactive Card Canvas */}
-              <div className="md:col-span-6 flex justify-center">
-                <div
-                  className={`w-full max-w-[360px] aspect-[1.59/1] rounded-2xl border border-white/20 p-6 flex flex-col justify-between shadow-2xl transition-all ${
-                    previewTier === 'obsidian'
-                      ? 'bg-gradient-to-tr from-zinc-900 via-black to-zinc-950'
-                      : previewTier === 'founder'
-                      ? 'bg-gradient-to-tr from-amber-950 via-zinc-900 to-black border-amber-500/40'
-                      : previewTier === 'cyber'
-                      ? 'bg-gradient-to-tr from-cyan-950 via-zinc-950 to-black border-cyan-500/40'
-                      : 'bg-gradient-to-tr from-purple-950 via-black to-zinc-950 border-purple-500/40'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-display text-base tracking-widest text-white">KAMI</span>
-                        <span className="font-mono text-[8px] px-1 py-0.5 rounded bg-white/10 border border-white/20">
-                          CARD
-                        </span>
-                      </div>
-                      <span className="font-mono text-[8px] text-zinc-400 uppercase tracking-widest">
-                        {previewTier.toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 border border-white/20">
-                      <StellarLogoSVG className="w-3 h-3 text-white" />
-                      <span className="font-mono text-[8px] tracking-wider text-white">STELLAR</span>
-                    </div>
-                  </div>
+              {/* Right Column: AI Intent Extractor & Execution Card */}
+              <div className="lg:col-span-6 p-6 rounded-2xl bg-white/[0.03] border border-white/15 font-mono text-xs flex flex-col gap-3">
+                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                  <span className="text-cyan-400 font-bold">QWEN AI PARSER EXECUTION PAYLOAD</span>
+                  <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                    PARSED IN 180ms
+                  </span>
+                </div>
 
-                  <div className="flex items-center gap-3 my-auto">
-                    <div className="w-9 h-7 rounded bg-gradient-to-tr from-slate-400 to-slate-200 p-[1px]">
-                      <div className="w-full h-full bg-[#cbd5e1] rounded flex items-center justify-center">
-                        <div className="w-2.5 h-2.5 rounded-full border border-slate-500" />
-                      </div>
-                    </div>
-                    <span className="font-mono text-[10px] text-zinc-400">●))) Contactless</span>
+                <div className="space-y-2 py-2">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Target Recipient:</span>
+                    <span className="text-white font-semibold">{parsedResult.recipient}</span>
                   </div>
-
-                  <div className="flex justify-between items-end">
-                    <div className="font-mono text-[10px] text-white">
-                      <div>STELLAR HACKATHON DEMO</div>
-                      <div className="text-zinc-500 text-[8px]">4232 •••• •••• 8892</div>
-                    </div>
-                    <div className="text-right font-sans font-black italic text-xl text-white">VISA</div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Parsed Amount:</span>
+                    <span className="text-emerald-400 font-bold text-sm">{parsedResult.amount}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Auto Expiration:</span>
+                    <span className="text-white">{parsedResult.expiry}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Enforced Category:</span>
+                    <span className="text-cyan-300">{parsedResult.category}</span>
                   </div>
                 </div>
+
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10 text-[11px] text-zinc-400 font-sans">
+                  🛡️ <strong>Safety Guarantee</strong>: Execution halts at preview stage. Requires explicit cryptographic biometric authorization via Privy before triggering Stellar settlement.
+                </div>
+
+                <button
+                  onClick={() => {
+                    setParsedResult((prev) => ({ ...prev, status: 'executed' }));
+                    setTimeout(() => setParsedResult((prev) => ({ ...prev, status: 'parsed' })), 3000);
+                  }}
+                  className={`w-full py-3 rounded-xl font-mono text-xs font-semibold transition-all mt-2 shadow-lg ${
+                    parsedResult.status === 'executed'
+                      ? 'bg-emerald-500 text-black'
+                      : 'bg-white text-black hover:bg-zinc-200'
+                  }`}
+                >
+                  {parsedResult.status === 'executed'
+                    ? '✓ EXECUTED VIA STELLAR & KRIPICARD'
+                    : '1-Tap Parental Approval → Execute'}
+                </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* SLIDE 7: Live POS Point-of-Sale Simulator on the Slide */}
+        {/* SLIDE 4: End-to-End System Architecture */}
+        {currentSlide === 3 && (
+          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <div>
+              <span className="font-mono text-xs text-cyan-400 uppercase tracking-widest block mb-1">
+                04 / ARCHITECTURE FLOW
+              </span>
+              <h2 className="font-display font-light text-3xl sm:text-4xl text-white">
+                How Natural Language Executes Underneath
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 my-2 font-mono text-xs">
+              <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col justify-between">
+                <div>
+                  <span className="text-cyan-400 font-bold text-xs block mb-1">01 / FRONTEND</span>
+                  <h4 className="font-display text-base text-white mb-2">Expo 57 + Skia</h4>
+                  <p className="text-[11px] text-zinc-300 font-sans leading-relaxed">
+                    React Native 0.86 client with Reanimated 4 and Skia shaders for 60fps animations and persistent AI chat streams.
+                  </p>
+                </div>
+                <span className="text-[9px] text-zinc-500 pt-3 border-t border-white/5">ZUSTAND STATE ENGINE</span>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-cyan-950/30 border border-cyan-500/40 flex flex-col justify-between">
+                <div>
+                  <span className="text-cyan-300 font-bold text-xs block mb-1">02 / BACKEND &amp; AI</span>
+                  <h4 className="font-display text-base text-white mb-2">Fastify 5 + Qwen</h4>
+                  <p className="text-[11px] text-zinc-300 font-sans leading-relaxed">
+                    Bun runtime hosting Fastify 5 server. Qwen LLM extracts financial intents, handles currency parsing, and enforces family safety schemas.
+                  </p>
+                </div>
+                <span className="text-[9px] text-cyan-400 pt-3 border-t border-cyan-500/20">BUN + TYPESCRIPT</span>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col justify-between">
+                <div>
+                  <span className="text-emerald-400 font-bold text-xs block mb-1">03 / REALTIME DB</span>
+                  <h4 className="font-display text-base text-white mb-2">SpacetimeDB 2.8</h4>
+                  <p className="text-[11px] text-zinc-300 font-sans leading-relaxed">
+                    Real-time relational database in Rust. Live-synchronizes family balances, allowance changes, and approval requests with 0 polling.
+                  </p>
+                </div>
+                <span className="text-[9px] text-emerald-400 pt-3 border-t border-white/5">RUST WASM SYNC</span>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col justify-between">
+                <div>
+                  <span className="text-purple-400 font-bold text-xs block mb-1">04 / SETTLEMENT</span>
+                  <h4 className="font-display text-base text-white mb-2">Stellar + KripiCard</h4>
+                  <p className="text-[11px] text-zinc-300 font-sans leading-relaxed">
+                    Stellar Horizon routes crypto deposits and atomic path payments in &lt;3.5s. KripiCard provisions programmable physical/virtual Visa cards.
+                  </p>
+                </div>
+                <span className="text-[9px] text-purple-400 pt-3 border-t border-white/5">PRIVY MPC WALLET</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SLIDE 5: Full Tech Stack Breakdown */}
+        {currentSlide === 4 && (
+          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <div>
+              <span className="font-mono text-xs text-cyan-400 uppercase tracking-widest block mb-1">
+                05 / PRODUCTION TECH STACK
+              </span>
+              <h2 className="font-display font-light text-3xl sm:text-4xl text-white">
+                Built With Production-Ready Modern Technologies
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-2 font-mono text-xs">
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                <span className="text-zinc-500 text-[10px] block">MOBILE CLIENT</span>
+                <span className="text-white font-bold text-sm block mt-1">Expo 57 / React Native</span>
+                <span className="text-[10px] text-cyan-400 mt-1 block">Skia &amp; Reanimated 4</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                <span className="text-zinc-500 text-[10px] block">BACKEND ENGINE</span>
+                <span className="text-white font-bold text-sm block mt-1">Fastify 5 / Bun</span>
+                <span className="text-[10px] text-emerald-400 mt-1 block">TypeScript Microservices</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                <span className="text-zinc-500 text-[10px] block">REAL-TIME DATABASE</span>
+                <span className="text-white font-bold text-sm block mt-1">SpacetimeDB 2.8</span>
+                <span className="text-[10px] text-purple-400 mt-1 block">Rust-Native Engine</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                <span className="text-zinc-500 text-[10px] block">FINANCIAL AI MODEL</span>
+                <span className="text-white font-bold text-sm block mt-1">Qwen LLM</span>
+                <span className="text-[10px] text-amber-400 mt-1 block">Contextual Intent Parser</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                <span className="text-zinc-500 text-[10px] block">SETTLEMENT LEDGER</span>
+                <span className="text-white font-bold text-sm block mt-1">Stellar / Horizon</span>
+                <span className="text-[10px] text-cyan-400 mt-1 block">&lt;3.5s Deterministic SCP</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                <span className="text-zinc-500 text-[10px] block">CARD ISSUER RAILS</span>
+                <span className="text-white font-bold text-sm block mt-1">KripiCard API</span>
+                <span className="text-[10px] text-emerald-400 mt-1 block">Visa / Mastercard POS</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                <span className="text-zinc-500 text-[10px] block">KEY MANAGEMENT</span>
+                <span className="text-white font-bold text-sm block mt-1">Privy Auth</span>
+                <span className="text-[10px] text-purple-400 mt-1 block">Non-Custodial MPC Wallets</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                <span className="text-zinc-500 text-[10px] block">TEST HARNESS</span>
+                <span className="text-white font-bold text-sm block mt-1">Vitest Suite</span>
+                <span className="text-[10px] text-amber-400 mt-1 block">End-to-End Safety Tests</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SLIDE 6: Seeded Sharma Household Demo */}
+        {currentSlide === 5 && (
+          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-end">
+              <div>
+                <span className="font-mono text-xs text-cyan-400 uppercase tracking-widest block mb-1">
+                  06 / LIVE HOUSEHOLD DEMO
+                </span>
+                <h2 className="font-display font-light text-3xl sm:text-4xl text-white">
+                  Seeded Sharma Household Demo
+                </h2>
+              </div>
+              <span className="font-mono text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                ● SEEDED &amp; READY TO DEMO
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-2">
+              {familyMembers.map((member, idx) => (
+                <div
+                  key={idx}
+                  className={`p-6 rounded-2xl border transition-all flex flex-col justify-between ${
+                    member.cardStatus === 'Active'
+                      ? 'bg-white/[0.03] border-white/15'
+                      : 'bg-red-950/20 border-red-500/30'
+                  }`}
+                >
+                  <div>
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-mono text-[10px] text-cyan-400 uppercase">{member.role}</span>
+                      <span
+                        className={`font-mono text-[9px] px-2 py-0.5 rounded ${
+                          member.cardStatus === 'Active'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                        }`}
+                      >
+                        {member.cardStatus === 'Active' ? '● ACTIVE CARD' : '❄ FROZEN'}
+                      </span>
+                    </div>
+
+                    <h3 className="font-display text-xl text-white mb-1">{member.name}</h3>
+                    <div className="font-mono text-sm text-zinc-300 font-semibold mb-3">{member.balance}</div>
+
+                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 font-mono text-[11px] space-y-1">
+                      <div className="text-zinc-400">Limit: <span className="text-white">{member.limit}</span></div>
+                      <div className="text-zinc-400">Provider: <span className="text-cyan-300">KripiCard Visa</span></div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-white/10 flex gap-2">
+                    <button
+                      onClick={() => toggleCardFreeze(idx)}
+                      className={`flex-1 py-2 rounded-xl text-xs font-mono font-semibold transition-all ${
+                        member.cardStatus === 'Active'
+                          ? 'bg-white/[0.08] hover:bg-red-500/20 text-red-300 border border-red-500/20'
+                          : 'bg-emerald-500 text-black'
+                      }`}
+                    >
+                      {member.cardStatus === 'Active' ? '🔒 Freeze Card' : 'Unfreeze'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SLIDE 7: Pay-Anyone QR & Pooled Crypto */}
         {currentSlide === 6 && (
           <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
             <div>
               <span className="font-mono text-xs text-cyan-400 uppercase tracking-widest block mb-1">
-                07 / INTERACTIVE DEMO STAGE
+                07 / UNIVERSAL LIQUIDITY
               </span>
               <h2 className="font-display font-light text-3xl sm:text-4xl text-white">
-                Live Point-of-Sale Swipe Simulator
+                Pay-Anyone QR &amp; Crypto Liquidity Pool
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 my-2 items-center">
-              {/* Left: Interactive POS swipe trigger */}
-              <div className="md:col-span-6 p-6 rounded-2xl bg-white/[0.03] border border-white/15 flex flex-col gap-4">
-                <span className="font-mono text-xs text-cyan-400 font-semibold">SIMULATED VISA CARD TERMINAL</span>
-
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-2">
+              <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col justify-between">
                 <div>
-                  <label className="font-mono text-[10px] text-zinc-400 block mb-1">ENTER PURCHASE AMOUNT ($ USD)</label>
-                  <input
-                    type="number"
-                    value={simAmount}
-                    onChange={(e) => setSimAmount(e.target.value)}
-                    disabled={simStatus === 'authorizing'}
-                    className="w-full bg-white/[0.05] border border-white/20 rounded-xl px-4 py-3 font-mono text-xl text-white outline-none focus:border-cyan-400"
-                  />
+                  <span className="text-3xl block mb-2">📲</span>
+                  <h3 className="font-display text-xl text-white mb-2">Universal QR Pay</h3>
+                  <p className="text-xs text-zinc-300 font-sans leading-relaxed">
+                    Scan any merchant QR code (UPI, BharatQR, Stellar QR, EMV standard). Kami parses the recipient VPA and settles instantly.
+                  </p>
                 </div>
-
-                <div className="p-3 bg-white/[0.02] border border-white/10 rounded-xl flex justify-between font-mono text-xs">
-                  <span className="text-zinc-400">MERCHANT:</span>
-                  <span className="text-white font-semibold">Apple Store Tokyo (0% FX)</span>
-                </div>
-
-                <button
-                  onClick={handleSimulateSwipe}
-                  disabled={simStatus === 'authorizing'}
-                  className={`w-full py-3.5 rounded-xl font-mono text-xs font-semibold transition-all shadow-lg flex items-center justify-center gap-2 ${
-                    simStatus === 'authorizing'
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400 animate-pulse'
-                      : 'bg-white text-black hover:bg-zinc-200'
-                  }`}
-                >
-                  {simStatus === 'authorizing' ? (
-                    <>
-                      <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-                      <span>Executing Soroban Settlement on Stellar...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Tap Visa Card to Pay ${simAmount} USDC →</span>
-                    </>
-                  )}
-                </button>
+                <span className="font-mono text-[10px] text-cyan-400 pt-3 border-t border-white/5">
+                  &lt;3.5s ATOMIC ROUTING
+                </span>
               </div>
 
-              {/* Right: Real-time on-chain telemetry result */}
-              <div className="md:col-span-6 p-6 rounded-2xl bg-white/[0.03] border border-white/15 flex flex-col gap-3 font-mono text-xs">
-                <span className="text-zinc-400 text-[10px] uppercase tracking-wider">STELLAR LEDGER SETTLEMENT RECEIPT</span>
+              <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col justify-between">
+                <div>
+                  <span className="text-3xl block mb-2">🏊‍♂️</span>
+                  <h3 className="font-display text-xl text-white mb-2">Family Crypto Pool</h3>
+                  <p className="text-xs text-zinc-300 font-sans leading-relaxed">
+                    Pool USDC and XLM in a non-custodial household vault. Family members spend against dynamically budgeted allowance ceilings.
+                  </p>
+                </div>
+                <span className="font-mono text-[10px] text-emerald-400 pt-3 border-t border-white/5">
+                  STELLAR HORIZON VAULT
+                </span>
+              </div>
 
-                {simStatus === 'idle' && (
-                  <div className="h-44 flex flex-col items-center justify-center text-center text-zinc-500 font-sans">
-                    <span className="text-3xl mb-2">📡</span>
-                    <span>Ready for swipe trigger. Click "Tap Visa Card" on the left to execute.</span>
-                  </div>
-                )}
-
-                {simStatus === 'authorizing' && (
-                  <div className="h-44 flex flex-col items-center justify-center text-center text-cyan-400">
-                    <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-3" />
-                    <span className="font-mono text-xs">Soroban Contract Verifying MPC Proof...</span>
-                    <span className="text-[10px] text-zinc-500 mt-1">Closing Stellar Ledger via SCP consensus</span>
-                  </div>
-                )}
-
-                {simStatus === 'settled' && simTx && (
-                  <div className="space-y-2.5 animate-in fade-in">
-                    <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center justify-between">
-                      <span className="font-bold">✓ VISA TRANSACTION APPROVED</span>
-                      <span className="text-[10px]">LEDGER CLOSED</span>
-                    </div>
-
-                    <div className="flex justify-between border-b border-white/5 pb-1.5">
-                      <span className="text-zinc-400">TX HASH:</span>
-                      <span className="text-cyan-400">{simTx.hash}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-white/5 pb-1.5">
-                      <span className="text-zinc-400">CONSENSUS LATENCY:</span>
-                      <span className="text-white font-bold">{simTx.latency} seconds</span>
-                    </div>
-                    <div className="flex justify-between border-b border-white/5 pb-1.5">
-                      <span className="text-zinc-400">DEBITED AMOUNT:</span>
-                      <span className="text-white font-bold">${simAmount} USDC</span>
-                    </div>
-                    <div className="flex justify-between border-b border-white/5 pb-1.5">
-                      <span className="text-zinc-400">XLM CASHBACK PAID:</span>
-                      <span className="text-emerald-400 font-bold">+${simTx.cashback} XLM (3.5%)</span>
-                    </div>
-                    <div className="flex justify-between text-zinc-500 text-[10px]">
-                      <span>NETWORK GAS FEE:</span>
-                      <span>0.00001 XLM ($0.000001)</span>
-                    </div>
-                  </div>
-                )}
+              <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col justify-between">
+                <div>
+                  <span className="text-3xl block mb-2">🔒</span>
+                  <h3 className="font-display text-xl text-white mb-2">Financial Safety Guardrails</h3>
+                  <p className="text-xs text-zinc-300 font-sans leading-relaxed">
+                    Pre-authorization limits, automated suspicious velocity freezing, and instant one-tap parental approval requests.
+                  </p>
+                </div>
+                <span className="font-mono text-[10px] text-purple-400 pt-3 border-t border-white/5">
+                  ADMIN CONSOLE CONTROL
+                </span>
               </div>
             </div>
           </div>
         )}
 
-        {/* SLIDE 8: Post-Hackathon Strategic Roadmap */}
+        {/* SLIDE 8: Current Working Prototype Status */}
         {currentSlide === 7 && (
           <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
             <div>
               <span className="font-mono text-xs text-cyan-400 uppercase tracking-widest block mb-1">
-                08 / POST-HACKATHON ROADMAP
+                08 / PROJECT MATURITY
               </span>
               <h2 className="font-display font-light text-3xl sm:text-4xl text-white">
-                From Hackathon Prototype to Global Scale
+                Working End-to-End Prototype
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 my-2">
-              <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col justify-between">
-                <div>
-                  <span className="font-mono text-xs text-cyan-400 block mb-1 font-semibold">STAGE 1 (NEXT 30 DAYS)</span>
-                  <h4 className="font-display text-lg text-white mb-2">Testnet &amp; Formal Verification</h4>
-                  <ul className="text-xs font-sans text-zinc-300 space-y-2">
-                    <li>• Soroban Futurenet deployment</li>
-                    <li>• Formal contract audit with OpenZeppelin / Kudelski</li>
-                    <li>• Developer SDK release for Stellar dApps</li>
-                  </ul>
-                </div>
-                <span className="font-mono text-[9px] text-cyan-400 mt-4 block">OPEN TESTNET</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-2">
+              <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10">
+                <span className="font-mono text-xs text-cyan-400 block mb-2">IMPLEMENTED &amp; DEMO-READY</span>
+                <ul className="text-xs font-mono text-zinc-300 space-y-2">
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span> AI-First Home with persistent conversational threads
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span> Family &amp; Household Management with allowance controls
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span> Programmable card issuance via KripiCard API
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span> Real-time synchronization via SpacetimeDB 2.8
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span> Privy non-custodial MPC wallet authentication
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span> Stellar / Horizon deposit and transfer infrastructure
+                  </li>
+                </ul>
               </div>
 
-              <div className="p-6 rounded-2xl bg-cyan-950/20 border border-cyan-500/30 flex flex-col justify-between">
-                <div>
-                  <span className="font-mono text-xs text-emerald-400 block mb-1 font-semibold">STAGE 2 (Q2 2026)</span>
-                  <h4 className="font-display text-lg text-white mb-2">Mainnet Virtual Cards</h4>
-                  <ul className="text-xs font-sans text-zinc-300 space-y-2">
-                    <li>• Stellar Mainnet contract deployment</li>
-                    <li>• Apple Pay &amp; Google Wallet virtual issuance</li>
-                    <li>• Stellar Community Fund (SCF) grant deployment</li>
-                  </ul>
-                </div>
-                <span className="font-mono text-[9px] text-emerald-400 mt-4 block">COMMUNITY ROLLOUT</span>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col justify-between">
-                <div>
-                  <span className="font-mono text-xs text-purple-400 block mb-1 font-semibold">STAGE 3 (Q3 2026)</span>
-                  <h4 className="font-display text-lg text-white mb-2">Physical Metal Hardware</h4>
-                  <ul className="text-xs font-sans text-zinc-300 space-y-2">
-                    <li>• 18g Obsidian Metal card production</li>
-                    <li>• Worldwide DHL shipping to 180+ countries</li>
-                    <li>• B2B Web3 DAO payroll card API</li>
-                  </ul>
-                </div>
-                <span className="font-mono text-[9px] text-purple-400 mt-4 block">HARDWARE MANUFACTURING</span>
+              <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10">
+                <span className="font-mono text-xs text-purple-400 block mb-2">ENTERPRISE SAFETY &amp; TESTING</span>
+                <ul className="text-xs font-mono text-zinc-300 space-y-2">
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span> Seeded Sharma household ready for live judge walkthrough
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span> KYC and card order queues with admin dashboard
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span> Automated Vitest integration test suite passing
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span> 0% foreign exchange settlement for international travel
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span> Web-native interactive 3D Card Studio &amp; live simulators
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
         )}
 
-        {/* SLIDE 9: Conclusion & Live Q&A */}
+        {/* SLIDE 9: Why Stellar + SpacetimeDB + Qwen? */}
         {currentSlide === 8 && (
+          <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <div>
+              <span className="font-mono text-xs text-cyan-400 uppercase tracking-widest block mb-1">
+                09 / UNFAIR ADVANTAGE
+              </span>
+              <h2 className="font-display font-light text-3xl sm:text-4xl text-white">
+                Why This Architecture Wins
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-2">
+              <div className="p-6 rounded-2xl bg-cyan-950/30 border border-cyan-400/50 flex flex-col justify-between">
+                <div>
+                  <span className="font-mono text-xs text-cyan-300 font-bold block mb-1">STELLAR NETWORK</span>
+                  <h3 className="font-display text-xl text-white mb-2">&lt;3.5s Finality &amp; $0.00001 Gas</h3>
+                  <p className="text-xs text-zinc-300 font-sans leading-relaxed">
+                    Stellar Consensus Protocol guarantees payment finality in 3.2s without terminal timeouts, and micro-fees make $2 retail transactions viable.
+                  </p>
+                </div>
+                <span className="font-mono text-[10px] text-cyan-300 pt-3 border-t border-cyan-500/20">DETERMINISTIC CONSENSUS</span>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col justify-between">
+                <div>
+                  <span className="font-mono text-xs text-emerald-400 font-bold block mb-1">SPACETIMEDB 2.8</span>
+                  <h3 className="font-display text-xl text-white mb-2">Real-time Multi-Device Sync</h3>
+                  <p className="text-xs text-zinc-300 font-sans leading-relaxed">
+                    When Dad approves an allowance or freezes a card, every family phone updates immediately without HTTP polling or websocket desyncs.
+                  </p>
+                </div>
+                <span className="font-mono text-[10px] text-emerald-400 pt-3 border-t border-white/5">RUST WASM ENGINE</span>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col justify-between">
+                <div>
+                  <span className="font-mono text-xs text-purple-400 font-bold block mb-1">QWEN FINANCIAL AI</span>
+                  <h3 className="font-display text-xl text-white mb-2">Contextual Safety Guardrails</h3>
+                  <p className="text-xs text-zinc-300 font-sans leading-relaxed">
+                    Understands colloquial household vernacular (&ldquo;15k&rdquo;, &ldquo;1.5 lakh&rdquo;, &ldquo;till Sunday&rdquo;) while enforcing strict verification boundaries.
+                  </p>
+                </div>
+                <span className="font-mono text-[10px] text-purple-400 pt-3 border-t border-white/5">ZERO-HALLUCINATION EXECUTION</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SLIDE 10: Conclusion & The Vision */}
+        {currentSlide === 9 && (
           <div className="flex flex-col items-center justify-center text-center py-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="w-16 h-16 rounded-2xl bg-white/[0.08] border border-white/20 flex items-center justify-center mb-4">
               <StellarLogoSVG className="w-8 h-8 text-cyan-400" />
             </div>
 
             <h2 className="font-display font-light text-4xl sm:text-6xl text-white mb-3">
-              Thank You, Judges!
+              KAMI — Money That Understands Your Family.
             </h2>
-            <p className="font-mono text-sm text-zinc-400 max-w-xl mb-6">
-              Kami Kards: Real non-custodial crypto payments. Built natively for Soroban &amp; Stellar.
+            <p className="font-mono text-sm text-cyan-300 max-w-xl mb-6">
+              Financial infrastructure underneath. Natural language on top. Trust at every step.
             </p>
 
-            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/15 max-w-md w-full font-mono text-xs space-y-2.5 text-left mb-6">
+            <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/15 max-w-md w-full font-mono text-xs space-y-2 text-left mb-6">
               <div className="flex justify-between">
                 <span className="text-zinc-400">Track:</span>
                 <span className="text-white font-semibold">Real-World Assets &amp; Payments</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-400">Smart Contracts:</span>
-                <span className="text-cyan-400">Soroban Rust v21 WASM</span>
+                <span className="text-zinc-400">Stack:</span>
+                <span className="text-cyan-400">Stellar + SpacetimeDB + Qwen + Expo</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-400">Consensus Speed:</span>
-                <span className="text-emerald-400">&lt;3.5s Deterministic Finality</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-400">Full App Demo:</span>
+                <span className="text-zinc-400">Live Web Client:</span>
                 <a href="/" target="_blank" className="text-white underline underline-offset-2 hover:text-cyan-300">
-                  http://localhost:3000
+                  https://kami.mystic.cat
                 </a>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Card Integration:</span>
+                <span className="text-emerald-400">KripiCard Programmable Visa</span>
               </div>
             </div>
 
             <span className="font-mono text-xs text-cyan-400 animate-pulse">
-              ● READY FOR LIVE JUDGE Q&amp;A
+              ● READY FOR LIVE JUDGE DEMO &amp; Q&amp;A
             </span>
           </div>
         )}
@@ -919,17 +870,18 @@ impl KamiCashbackProtocol {
               <button className="font-mono text-sm text-zinc-400 hover:text-white">✕ Close</button>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {[
-                '01. Title & 3D Carousel Stage',
-                '02. The Core POS Friction',
-                '03. Sub-3.5s Architecture Flow',
-                '04. Soroban Smart Contract (Rust)',
-                '05. Benchmark Comparison',
-                '06. Hardware & App Suite',
-                '07. Live Swipe POS Simulator',
-                '08. Post-Hackathon Roadmap',
-                '09. Conclusion & Judge Q&A',
+                '01. Money That Understands Your Family',
+                '02. The Problem: Legacy Banking Friction',
+                '03. Live AI Intent Parser Demo',
+                '04. End-to-End System Architecture',
+                '05. Full Production Tech Stack',
+                '06. Seeded Sharma Household Demo',
+                '07. Pay-Anyone QR & Crypto Pool',
+                '08. Working Prototype Status',
+                '09. Why This Architecture Wins',
+                '10. The Vision & Judge Q&A',
               ].map((title, idx) => (
                 <div
                   key={idx}
@@ -945,7 +897,7 @@ impl KamiCashbackProtocol {
                   }`}
                 >
                   <span className="font-mono text-[10px] text-cyan-400 block mb-1">SLIDE {idx + 1}</span>
-                  <h4 className="font-display text-xs text-white">{title}</h4>
+                  <h4 className="font-display text-xs text-white line-clamp-2">{title}</h4>
                 </div>
               ))}
             </div>
@@ -976,7 +928,7 @@ impl KamiCashbackProtocol {
         <div className="flex items-center gap-4 font-mono text-[11px] text-zinc-400">
           <span className="hidden sm:inline">Use ← → Arrow Keys / Space</span>
           <span>•</span>
-          <span className="text-cyan-400 font-semibold">STELLAR HACKATHON 2026</span>
+          <span className="text-cyan-400 font-semibold">KAMI — STELLAR HACKATHON 2026</span>
         </div>
       </footer>
     </div>

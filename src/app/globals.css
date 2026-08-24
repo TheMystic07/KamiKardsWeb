@@ -25,15 +25,28 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: geometricPrecision;
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+
+/* Hide scrollbar for Chrome, Safari, Edge and Opera */
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0px !important;
+  height: 0px !important;
+  background: transparent !important;
 }
 
 html, body {
   width: 100%;
-  height: 100%;
+  min-height: 100%;
   background-color: var(--bg);
   color: var(--text);
   font-family: var(--font-display);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 .font-display {
@@ -50,14 +63,14 @@ html, body {
 .hero {
   position: relative;
   width: 100%;
-  height: 100vh;
-  height: 100svh;
-  min-height: 640px;
-  overflow: hidden;
+  min-height: 100vh;
+  min-height: 100svh;
   display: grid;
   grid-template-rows: auto 1fr auto;
   isolation: isolate;
   background-color: #000000;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 @media (max-height: 640px) {

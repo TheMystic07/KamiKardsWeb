@@ -126,6 +126,10 @@ export default function PitchDeckPage() {
     }
   };
 
+  const isScrollingRef = React.useRef(false);
+  const touchStartY = React.useRef(0);
+  const touchStartX = React.useRef(0);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === 'Space') {
@@ -147,9 +151,57 @@ export default function PitchDeckPage() {
       }
     };
 
+    const handleWheel = (e: WheelEvent) => {
+      if (showOverview) return;
+      if (Math.abs(e.deltaY) > 28) {
+        if (isScrollingRef.current) return;
+        isScrollingRef.current = true;
+
+        if (e.deltaY > 0) {
+          nextSlide();
+        } else {
+          prevSlide();
+        }
+
+        setTimeout(() => {
+          isScrollingRef.current = false;
+        }, 450);
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+      touchStartX.current = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (showOverview) return;
+      const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+      const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+
+      if (Math.abs(deltaX) > 40 || Math.abs(deltaY) > 40) {
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+          if (deltaX < 0) nextSlide();
+          else prevSlide();
+        } else {
+          if (deltaY < 0) nextSlide();
+          else prevSlide();
+        }
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [nextSlide, prevSlide, totalSlides]);
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [nextSlide, prevSlide, totalSlides, showOverview]);
 
   const progressPercent = ((currentSlide + 1) / totalSlides) * 100;
 

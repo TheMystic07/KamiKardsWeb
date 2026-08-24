@@ -1,10 +1,12 @@
 name = "kami-website"
-main = "worker.js"
 compatibility_date = "2026-02-24"
-compatibility_flags = ["nodejs_compat"]
+account_id = "30a113a636e7792fb845964f984173e5"
+
+routes = [
+  { pattern = "kami.mystic.cat", custom_domain = true }
+]
 
 [assets]
 directory = "./out"
-binding = "ASSETS"
 html_handling = "auto-trailing-slash"
 not_found_handling = "404-page"

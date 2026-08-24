@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>KAMI — The Crypto Neobank on Stellar | Spend USDC & XLM with Visa</title>
+  <meta name="description" content="Fund virtual and physical Visa cards on the Stellar network with USDC or XLM. Spend crypto globally with instant settlement, zero foreign transaction fees, and non-custodial Soroban vaults.">
+  <meta name="theme-color" content="#000000">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://d8j0ntlcm91z4.cloudfront.net">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Sora:wght@200;300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #000000;
+      --text: #ffffff;
+      --text-dim: rgba(255, 255, 255, 0.62);
+      --text-dimmer: rgba(255, 255, 255, 0.42);
+      --line: rgba(255, 255, 255, 0.14);
+      --line-strong: rgba(255, 255, 255, 0.26);
+      --fill-ghost: rgba(255, 255, 255, 0.08);
+      --fill-solid: #ffffff;
+      --gutter: clamp(20px, 5vw, 100px);
+      --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+      --font-display: "Sora", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: geometricPrecision;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-display);
+      overflow: hidden;
+    }
+
+    .hero {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      height: 100svh;
+      min-height: 640px;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      isolation: isolate;
+      background-color: #000000;
+    }
+
+    @media (max-height: 640px) {
+      .hero { min-height: 100svh; }
+    }
+
+    .cosmic-bg {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: #000000;
+      overflow: hidden;
+    }
+
+    .nebula-1 {
+      position: absolute;
+      top: -20%;
+      left: -10%;
+      width: 65vw;
+      height: 65vw;
+      max-width: 900px;
+      max-height: 900px;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, rgba(0, 240, 255, 0.09) 0%, rgba(43, 127, 255, 0.04) 45%, transparent 70%);
+      filter: blur(90px);
+    }
+
+    .nebula-2 {
+      position: absolute;
+      bottom: -15%;
+      right: 5%;
+      width: 55vw;
+      height: 55vw;
+      max-width: 750px;
+      max-height: 750px;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, rgba(157, 78, 221, 0.07) 0%, rgba(0, 240, 255, 0.03) 50%, transparent 70%);
+      filter: blur(100px);
+    }
+
+    .matrix-grid {
+      position: absolute;
+      inset: 0;
+      opacity: 0.14;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 32px;
+      padding-top: clamp(20px, 2.4vw, 34px);
+      padding-bottom: clamp(20px, 2.4vw, 34px);
+      padding-left: max(var(--gutter), env(safe-area-inset-left));
+      padding-right: max(var(--gutter), env(safe-area-inset-right));
+      z-index: 60;
+      position: relative;
+    }
+
+    .nav__logo {
+      font-family: var(--font-display);
+      font-weight: 200;
+      font-size: clamp(20px, 1.75vw, 30px);
+      letter-spacing: 0.16em;
+      color: #ffffff;
+      text-decoration: none;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav__logo span.sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      color: var(--text-dim);
+    }
+
+    .nav__cluster {
+      display: flex;
+      align-items: center;
+      gap: clamp(24px, 3.2vw, 62px);
+    }
+
+    .nav__links {
+      display: flex;
+      align-items: center;
+      gap: clamp(20px, 2.8vw, 56px);
+    }
+
+    .nav__link {
+      font-family: var(--font-mono);
+      font-weight: 400;
+      font-size: clamp(11px, 0.78vw, 14px);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-decoration: none;
+      transition: color 0.25s ease;
+    }
+
+    .nav__link:hover { color: var(--text-dim); }
+
+    .nav__cta {
+      font-family: var(--font-mono);
+      font-weight: 400;
+      font-size: clamp(11px, 0.78vw, 14px);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-decoration: none;
+      padding: clamp(12px, 1vw, 17px) clamp(20px, 1.8vw, 32px);
+      border: 1px solid var(--line-strong);
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .nav__cta:hover {
+      background-color: var(--fill-ghost);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .burger {
+      display: none;
+      position: relative;
+      width: 44px;
+      height: 44px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      z-index: 70;
+    }
+
+    .burger__bar {
+      position: absolute;
+      left: 50%;
+      width: 22px;
+      height: 1px;
+      background-color: #ffffff;
+      transform: translateX(-50%);
+      transition: transform 0.45s var(--ease-premium), opacity 0.25s ease;
+    }
+
+    .burger__bar:nth-child(1) { top: 16px; }
+    .burger__bar:nth-child(2) { top: 22px; }
+    .burger__bar:nth-child(3) { top: 28px; }
+
+    .burger.is-active .burger__bar:nth-child(1) {
+      top: 22px;
+      transform: translateX(-50%) rotate(45deg);
+    }
+    .burger.is-active .burger__bar:nth-child(2) {
+      opacity: 0;
+      transform: translateX(-50%) scaleX(0);
+    }
+    .burger.is-active .burger__bar:nth-child(3) {
+      top: 22px;
+      transform: translateX(-50%) rotate(-45deg);
+    }
+
+    .mobile-menu {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(4, 4, 6, 0.94);
+      backdrop-filter: blur(28px) saturate(140%);
+      -webkit-backdrop-filter: blur(28px) saturate(140%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      clip-path: circle(3% at calc(100% - 42px) 42px);
+      opacity: 0;
+      pointer-events: none;
+      transition: clip-path 0.7s var(--ease-premium), opacity 0.45s ease;
+    }
+
+    .mobile-menu.is-open {
+      clip-path: circle(150% at calc(100% - 42px) 42px);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .mobile-menu__list {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .mobile-menu__link {
+      font-family: var(--font-mono);
+      font-weight: 400;
+      font-size: clamp(20px, 5.5vw, 28px);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-decoration: none;
+    }
+
+    .hero__body {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      padding-left: max(var(--gutter), env(safe-area-inset-left));
+      padding-right: max(var(--gutter), env(safe-area-inset-right));
+      min-height: 0;
+      overflow-y: auto;
+      gap: 40px;
+    }
+
+    .hero__carousel-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .panel {
+      width: min(34vw, 620px);
+      min-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      z-index: 10;
+    }
+
+    .chip {
+      font-family: var(--font-mono);
+      font-weight: 400;
+      font-size: clamp(11px, 0.72vw, 14px);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.09);
+      padding: clamp(9px, 0.8vw, 14px) clamp(14px, 1.1vw, 20px);
+      line-height: 1;
+      color: #ffffff;
+      display: inline-block;
+    }
+
+    .hero__h1 {
+      font-family: var(--font-display);
+      font-weight: 200;
+      font-size: clamp(54px, 6.2vw, 118px);
+      letter-spacing: 0.03em;
+      line-height: 0.95;
+      margin-top: clamp(20px, 2.5vw, 40px);
+      color: #ffffff;
+    }
+
+    .hero__tagline {
+      font-family: var(--font-mono);
+      font-weight: 300;
+      font-size: clamp(11px, 0.94vw, 17px);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-top: clamp(14px, 1.4vw, 24px);
+      line-height: 1.4;
+    }
+
+    .form {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+    }
+
+    .input__email {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--line-strong);
+      border-radius: 0;
+      padding: 0 2px 14px;
+      font-family: var(--font-display);
+      font-weight: 300;
+      font-size: clamp(15px, 0.95vw, 17px);
+      color: #ffffff;
+      outline: none;
+    }
+
+    .input__email::placeholder { color: var(--text-dim); }
+    .input__email:focus { border-bottom-color: rgba(255, 255, 255, 0.85); }
+
+    .btn--ghost {
+      width: 100%;
+      border-radius: 0;
+      border: 1px solid var(--line-strong);
+      padding: 16px 20px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      font-size: clamp(11px, 0.78vw, 13px);
+      background-color: var(--fill-ghost);
+      color: #ffffff;
+      cursor: pointer;
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .btn--ghost:hover {
+      background-color: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .btn--solid {
+      width: 100%;
+      border-radius: 0;
+      border: none;
+      padding: 16px 20px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      font-size: clamp(11px, 0.78vw, 13px);
+      background-color: #ffffff;
+      color: #000000;
+      cursor: pointer;
+      transition: background-color 0.25s ease;
+    }
+
+    .btn--solid:hover {
+      background-color: #e4e4e7;
+    }
+
+    .referral {
+      font-family: var(--font-mono);
+      font-weight: 400;
+      font-size: clamp(11px, 0.74vw, 14px);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-top: 20px;
+      align-self: center;
+      text-decoration: none;
+      transition: color 0.25s ease;
+    }
+
+    .referral:hover {
+      color: var(--text-dim);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    .footer {
+      border-top: 1px solid var(--line);
+      padding-top: clamp(18px, 1.7vw, 30px);
+      padding-bottom: max(clamp(18px, 1.7vw, 30px), env(safe-area-inset-bottom));
+      padding-left: max(var(--gutter), env(safe-area-inset-left));
+      padding-right: max(var(--gutter), env(safe-area-inset-right));
+      text-align: center;
+      z-index: 20;
+      position: relative;
+    }
+
+    .footer__text {
+      font-family: var(--font-display);
+      font-weight: 300;
+      font-size: clamp(12px, 0.82vw, 16px);
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .footer__link {
+      color: #ffffff;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+    }
+
+    @media (max-width: 1100px) {
+      .panel { width: min(70vw, 520px); min-width: 0; }
+    }
+
+    @media (max-width: 900px) {
+      .nav__links, .nav__cta { display: none; }
+      .burger { display: block; }
+    }
+
+    @media (max-width: 720px) {
+      .hero__body {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        gap: 32px;
+      }
+      .hero__carousel-wrapper { display: none; }
+      .panel { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="hero">
+    <!-- Cosmic Nebula & Constellation Background -->
+    <div class="cosmic-bg" aria-hidden="true">
+      <div class="nebula-1"></div>
+      <div class="nebula-2"></div>
+      <div class="matrix-grid"></div>
+      <canvas id="cosmicCanvas" style="position: absolute; inset: 0; width: 100%; height: 100%;"></canvas>
+    </div>
+
+    <!-- Row 1: Navbar -->
+    <header class="navbar">
+      <a href="#" class="nav__logo" aria-label="KAMI Home">
+        <svg style="width: 20px; height: 20px;" viewBox="0 0 32 32" fill="currentColor">
+          <path d="M23.13 8.292l-2.4 1.224-11.598 5.907A6.909 6.909 0 0119.35 8.498l1.374-.7.205-.105a8.439 8.439 0 00-13.371 7.472 1.535 1.535 0 01-.834 1.484l-.725.37v1.724l2.134-1.088.691-.353.681-.347 12.226-6.23 1.374-.699 2.84-1.447V6.856L23.13 8.292zm2.816 2.012L10.201 18.32l-1.374.7L6 20.463v1.723l2.808-1.43 2.401-1.224 11.61-5.916a6.909 6.909 0 01-10.229 6.93l-.085.045-1.49.76a8.439 8.439 0 0013.372-7.475 1.536 1.536 0 01.833-1.483l.726-.37v-1.718z"/>
+        </svg>
+        <span>KAMI</span>
+        <span class="sub">KARDS</span>
+      </a>
+      <div class="nav__cluster">
+        <nav class="nav__links" aria-label="Primary">
+          <a href="#cards" class="nav__link">Cards</a>
+          <a href="#stellar" class="nav__link">Stellar Core</a>
+          <a href="#soroban" class="nav__link">Soroban Vaults</a>
+          <a href="#security" class="nav__link">Security</a>
+        </nav>
+        <a href="#order" class="nav__cta">Claim Card</a>
+        <button type="button" class="burger" id="burger" aria-label="Toggle navigation">
+          <span class="burger__bar"></span>
+          <span class="burger__bar"></span>
+          <span class="burger__bar"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <nav id="mobileMenu" class="mobile-menu" role="dialog" aria-modal="true" aria-hidden="true">
+      <ul class="mobile-menu__list">
+        <li><a href="#cards" class="mobile-menu__link">Cards</a></li>
+        <li><a href="#stellar" class="mobile-menu__link">Stellar Core</a></li>
+        <li><a href="#soroban" class="mobile-menu__link">Soroban Vaults</a></li>
+        <li><a href="#security" class="mobile-menu__link">Security</a></li>
+        <li><a href="#order" class="nav__cta" style="margin-top: 16px;">Claim Card</a></li>
+      </ul>
+    </nav>
+
+    <!-- Row 2: Hero Body -->
+    <div class="hero__body">
+      <!-- Left / Center: Interactive 3D Cylinder Card Carousel -->
+      <div class="hero__carousel-wrapper" id="carouselWrapper"></div>
+
+      <!-- Right: Voice Entry Signup Panel -->
+      <div class="panel">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span class="chip">[ STELLAR NEOBANK ]</span>
+          <span style="font-family: var(--font-mono); font-size: 10px; color: #34d399; letter-spacing: 0.1em;">● MAINNET LIVE</span>
+        </div>
+
+        <h1 class="hero__h1">KAMI</h1>
+        <p class="hero__tagline">Fund with USDC &amp; XLM. Spend real money worldwide with Visa.</p>
+
+        <form class="form" onsubmit="event.preventDefault(); alert('Kami Card allocation reserved!');">
+          <input type="email" placeholder="Enter your email for instant access" required class="input__email" autocomplete="email">
+          <button type="submit" class="btn--ghost">Claim Obsidian Metal Card →</button>
+          <button type="button" class="btn--solid" onclick="alert('Connecting to Stellar Wallet...');">Connect Stellar Wallet</button>
+        </form>
+
+        <a href="#invite" class="referral">I've got an invite key</a>
+      </div>
+    </div>
+
+    <!-- Row 3: Legal Footer -->
+    <footer class="footer">
+      <p class="footer__text">
+        Opening a Kami account signals that you accept our <a href="#privacy-notice" class="footer__link">Privacy Notice</a> and <a href="#service-contract" class="footer__link">Service Contract</a>. Powered by Stellar &amp; Soroban smart contracts. Visa® is a registered trademark.
+      </p>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      const burger = document.getElementById('burger');
+      const mobileMenu = document.getElementById('mobileMenu');
+      function toggle() {
+        const isOpen = mobileMenu.classList.toggle('is-open');
+        burger.classList.toggle('is-active', isOpen);
+      }
+      burger.addEventListener('click', toggle);
+      mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+        mobileMenu.classList.remove('is-open');
+        burger.classList.remove('is-active');
+      }));
+      window.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          mobileMenu.classList.remove('is-open');
+          burger.classList.remove('is-active');
+        }
+      });
+
+      // Simple starfield canvas
+      const canvas = document.getElementById('cosmicCanvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        let w = canvas.width = window.innerWidth;
+        let h = canvas.height = window.innerHeight;
+        window.addEventListener('resize', () => {
+          w = canvas.width = window.innerWidth;
+          h = canvas.height = window.innerHeight;
+        });
+        const stars = Array.from({ length: 45 }, () => ({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.2,
+          vy: (Math.random() - 0.5) * 0.2,
+          r: Math.random() * 1.5 + 0.5
+        }));
+        function draw() {
+          ctx.clearRect(0, 0, w, h);
+          ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
+          stars.forEach(s => {
+            s.x = (s.x + s.vx + w) % w;
+            s.y = (s.y + s.vy + h) % h;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          requestAnimationFrame(draw);
+        }
+        draw();
+      }
+    })();
+  </script>
+</body>
+</html>
